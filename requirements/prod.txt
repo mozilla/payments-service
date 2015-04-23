@@ -1,0 +1,48 @@
+# Production requirements go here.
+# Be sure that you always specify an exact version such as:
+# foo==1.2.3 and you list all dependencies explicitly.
+
+# sha256: -_EGYNso5_ZQvf9gTq_tWbTAmdjGG8bzyurqx64Rt4s
+curling==0.4.1
+
+# sha256: agPOL-r90ZOguoom29l3PnV9Ll1eeTOmLqwSmBO9OBo
+Django==1.8
+
+# sha256: jMb9abCD_WP_dy-6QnVit5OCy9FPhN37NA_nab1jL7E
+django-extensions==1.5.2
+
+# sha256: wOkPMEu_bxD2PgAZECmAyVDcaDMm0qTlDnGZ3sxDw2o
+django-statsd-mozilla==0.3.15
+
+# sha256: nOyK5RF0jPBMEQjB_Azl9L24mIaGCPKQzcCbz1Z4Sjc
+djangorestframework==3.1.1
+
+# sha256: vGM5kZpSNbnRqu4BHKVGQYQJjwxHyQmAAfkclxdlg_U
+httplib2==0.9.1
+
+# sha256: l5mtnC6N_91J4fMDOTJoU_ttu6Hi_A8mAyMn0b9QRtA
+mock==1.0.1
+
+# sha256: Uv7_deGY27Jry3KPknbXbVvy5QIjYHEEQlwoIG1TXPw
+mozilla-logger==0.2
+
+# sha256: Q2B5YKWWQ9MkyHCDeHxNUmSAIh0eTUCgB-5NH0kGrms
+oauthlib==0.7.2
+
+# sha256: tTHG7k3bZ2ptsZ6BS9FwT5KJ5Wwfro7UF9brdg5SuCY
+oauth2==1.5.211
+
+# sha256: CjoiZeHvsN76ci0fQpcw3J35da3DxgrH0rQyvfA8BB0
+Pygments==2.0.2
+
+# sha256: FVBl66dI8zp1QkHagz1iXau_L86Q4wQ6aYbXMeAffW8
+raven==4.0.3
+
+# sha256: jw9WgT-C0MJ9lXgiEmismvSPB2xx7mlpMwXOymyjVb0
+requests==2.6.2
+
+# sha256: fq8iKu7JIroZGCaMTrWR6pDUtut5bR5Ht_UIXk5OMu0
+slumber==0.7.0
+
+# sha256: RO9eCEULFCgVTsks91JMs4Bs8JpVifBFQmtqO3-EoFs
+statsd==2.1.2

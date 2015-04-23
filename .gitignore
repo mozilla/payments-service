@@ -1,13 +1,9 @@
 *.py[co]
 *.sw[po]
 *.egg-info
-.coverage
 .DS_Store
-.noseids
-.tox
-docs/_build/*
+logs/*
+supervisord.pid
 *~
 *.mo
 *.db
-dist
-apk_signer/settings/local.py
