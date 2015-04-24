@@ -1,0 +1,21 @@
+language: python
+python:
+  - "2.7"
+sudo: false
+cache:
+  # Workaround for
+  # https://github.com/travis-ci/travis-ci/issues/3239
+  directories:
+    - ~/.cache/pip
+before_script:
+  - flake8 . --exclude=./docs/conf.py
+install:
+  - pip install --find-links https://pyrepo.addons.mozilla.org/ peep
+  - peep install --no-deps -r requirements/dev.txt --find-links https://pyrepo.addons.mozilla.org/
+script: ./manage.py test
+notifications:
+  irc:
+    channels:
+      - "irc.mozilla.org#amo-bots"
+    on_success: change
+    on_failure: always

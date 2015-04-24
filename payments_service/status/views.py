@@ -14,7 +14,7 @@ class IndexView(UnprotectedAPIView):
         error = False
         try:
             api = solitude.api()
-            status = api.services.status.get()
+            api.services.status.get()
         except Exception, exc:
             log.exception('checking solitude status')
             error = exc
