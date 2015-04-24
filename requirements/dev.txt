@@ -19,6 +19,21 @@ nose-blockage==0.1.2
 nosenicedots==0.5
 
 
+# Flake8 requirements.
+
+# sha256: wEJTewVQLw7kQNlQ1fONWjwROwPMpHPDnqkAAb2ayFc
+flake8==2.4.0
+
+# sha256: ic9r9P9kT_i5EuL6fiq7aNV6jn6Rjjk8coQNMNLrzws
+mccabe==0.3
+
+# sha256: Yuh_1UU1-5MrSk2Uho21IyV6EDHIvGvTWMIBVDPmRts
+pep8==1.5.7
+
+# sha256: rEVxaVwQzhU2vNuhopS58tPmzJ0OoXG2fVCghkzj4EI
+pyflakes==0.8.1
+
+
 # For documentation.
 
 # sha256: WKJX4mpTkZBYon65qj104p1Zg9uoIpD8HBiY9OoklTU
