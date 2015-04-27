@@ -12,3 +12,6 @@ RUN peep install \
     --download-cache /pip/cache \
     --no-deps -r /pip/requirements/dev.txt \
     --find-links https://pyrepo.addons.mozilla.org/
+
+# Ship the source in the container.
+COPY . /srv/payments-service
