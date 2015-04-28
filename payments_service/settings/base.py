@@ -30,15 +30,14 @@ ALLOWED_HOSTS = []
 # Application definition
 
 INSTALLED_APPS = (
+    'rest_framework',
+    'payments_service.braintree',
     'payments_service.status',
 )
 
 MIDDLEWARE_CLASSES = (
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
-    'django.contrib.auth.middleware.AuthenticationMiddleware',
-    'django.contrib.auth.middleware.SessionAuthenticationMiddleware',
-    'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.security.SecurityMiddleware',
 )
 
@@ -148,6 +147,11 @@ LOGGING = {
     'loggers': {
         '': {
             'handlers': ['console', 'unicodesyslog'],
+            'level': 'INFO',
+            'propagate': True,
+        },
+        'payments_service': {
+            'handlers': ['console', 'unicodesyslog', 'sentry'],
             'level': 'INFO',
             'propagate': True,
         },
