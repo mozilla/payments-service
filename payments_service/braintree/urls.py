@@ -5,5 +5,6 @@ from . import views
 
 urlpatterns = patterns(
     '',
-    url(r'^$', views.Index.as_view(), name='index'),
+    url(r'^token/generate/$', views.TokenGenerator.as_view(),
+        name='token.generate'),
 )

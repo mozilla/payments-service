@@ -8,7 +8,7 @@ from ..base import UnprotectedAPIView
 log = logging.getLogger(__name__)
 
 
-class IndexView(UnprotectedAPIView):
+class Index(UnprotectedAPIView):
 
     def get(self, request):
         error = False

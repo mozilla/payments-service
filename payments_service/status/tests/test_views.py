@@ -11,7 +11,7 @@ from payments_service.base.tests import SolitudeTest
 class TestStatus(SolitudeTest):
 
     def data(self):
-        res = self.client.get(reverse('status.index'))
+        res = self.client.get(reverse('status:index'))
         return json.loads(res.content)
 
     def test_solitude_connected(self):
