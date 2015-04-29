@@ -13,8 +13,10 @@ log = logging.getLogger(__name__)
 
 
 def api():
-    # TODO: add oauth.
-    return API(settings.SOLITUDE_URL)
+    conn = API(settings.SOLITUDE_URL)
+    conn.activate_oauth(settings.SOLITUDE_KEY,
+                        settings.SOLITUDE_SECRET)
+    return conn
 
 
 class SolitudeBodyguard(APIView):
