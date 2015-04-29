@@ -19,6 +19,16 @@ class Index(UnprotectedAPIView):
             log.exception('checking solitude status')
             error = exc
 
+        # Add in JSON error response if we have it.
+        error_response = None
+        if getattr(error, 'content', None):
+            error_response = error.content
+
+        status = 203
+        if error:
+            status = 500
         return Response({'ok': not error,
                          'solitude': {'connected': not error,
-                                      'error': str(error)}})
+                                      'error': str(error),
+                                      'error_response': error_response}},
+                        status=status)

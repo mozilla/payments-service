@@ -176,3 +176,7 @@ NOSE_ARGS = [
 
 # URL to private payment processor. https://github.com/mozilla/solitude/
 SOLITUDE_URL = os.environ.get('SOLITUDE_URL', 'http://solitude:2602')
+
+# The oAuth key and secret that solitude needs.
+SOLITUDE_KEY = 'payments-service'
+SOLITUDE_SECRET = 'please change this'

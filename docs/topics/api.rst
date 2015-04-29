@@ -24,7 +24,8 @@ Retrieve overall status of the service.
             "ok": true,
             "solitude": {
                 "connected": true,
-                "error": null
+                "error": null,
+                "error_response": null
             }
         }
 
@@ -32,7 +33,10 @@ Retrieve overall status of the service.
     :>json boolean solitude.connected: ``true`` if `Solitude`_ is connected.
     :>json string solitude.error:
         Exception encountered when trying to connect to Solitude.
-    :status 200: success.
+    :>json string solitude.error_response:
+        Object describing the error, as returned from `Solitude`_.
+    :status 203: the system is OK.
+    :status 500: the system has errors.
 
 Braintree
 =========
