@@ -23,4 +23,6 @@ COPY . /srv/payments-service
 ENV HISTFILE=/srv/payments-service/docker/artifacts/bash_history
 # Configure bash history.
 ENV HISTSIZE=50000
+ENV HISTIGNORE=ls:exit:"cd .."
+# This prevents dupes but only in memory for the current session.
 ENV HISTCONTROL=erasedups
