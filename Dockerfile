@@ -2,6 +2,7 @@
 
 FROM mozillamarketplace/centos-mysql-mkt:0.2
 RUN yum install -y supervisor
+RUN yum install -y bash-completion
 
 RUN mkdir -p /pip/{cache,build}
 ADD requirements /pip/requirements
@@ -15,3 +16,7 @@ RUN peep install \
 
 # Ship the source in the container.
 COPY . /srv/payments-service
+
+# This works best when you link your local source code
+# as a volume.
+ENV HISTFILE=/srv/payments-service/docker/artifacts/bash_history
