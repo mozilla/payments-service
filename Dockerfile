@@ -17,6 +17,10 @@ RUN peep install \
 # Ship the source in the container.
 COPY . /srv/payments-service
 
+# Preserve bash history across image updates.
 # This works best when you link your local source code
 # as a volume.
 ENV HISTFILE=/srv/payments-service/docker/artifacts/bash_history
+# Configure bash history.
+ENV HISTSIZE=50000
+ENV HISTCONTROL=erasedups
