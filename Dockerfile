@@ -17,6 +17,8 @@ RUN peep install \
 # Ship the source in the container.
 COPY . /srv/payments-service
 
+EXPOSE 8000
+
 # Preserve bash history across image updates.
 # This works best when you link your local source code
 # as a volume.
