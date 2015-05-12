@@ -31,6 +31,7 @@ ALLOWED_HOSTS = []
 
 INSTALLED_APPS = (
     'rest_framework',
+    'payments_service.auth',
     'payments_service.braintree',
     'payments_service.status',
 )
@@ -146,17 +147,15 @@ LOGGING = {
     },
     'loggers': {
         '': {
-            'handlers': ['console', 'unicodesyslog'],
+            'handlers': ['console', 'unicodesyslog', 'sentry'],
             'level': 'INFO',
             'propagate': True,
         },
         'payments_service': {
-            'handlers': ['console', 'unicodesyslog', 'sentry'],
-            'level': 'INFO',
+            'level': 'DEBUG',
             'propagate': True,
         },
         'django.request': {
-            'handlers': ['console', 'unicodesyslog', 'sentry'],
             'level': 'INFO',
             'propagate': True
         },
@@ -180,3 +179,7 @@ SOLITUDE_URL = os.environ.get('SOLITUDE_URL', 'http://solitude:2602')
 # The oAuth key and secret that solitude needs.
 SOLITUDE_KEY = 'payments-service'
 SOLITUDE_SECRET = 'please change this'
+
+# Firefox Accounts OAuth server to use.
+# https://github.com/mozilla/fxa-oauth-server/
+FXA_OAUTH_URL = 'https://oauth-stable.dev.lcip.org'
