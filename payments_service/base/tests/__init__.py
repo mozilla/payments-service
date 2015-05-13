@@ -5,6 +5,7 @@ from django.test import TestCase as DjangoTestCase
 from django.test.utils import override_settings
 
 import mock
+from nose.tools import eq_
 from rest_framework.views import APIView
 
 from . import dynamic_urls
@@ -27,6 +28,16 @@ class APIMock(mock.Mock):
 
 
 class TestCase(DjangoTestCase):
+
+    def assert_form_error(self, res, fields=[]):
+        eq_(res.status_code, 400, res)
+        res, data = self.json(res)
+        assert 'error_response' in data, data
+        for field in fields:
+            assert field in data['error_response'], (
+                'field {f} not in {d}'
+                .format(f=field, d=data['error_response'])
+            )
 
     def json(self, response):
         return response, json.loads(response.content)

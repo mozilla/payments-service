@@ -2,6 +2,8 @@ from django.conf.urls import include, url
 
 
 urlpatterns = [
+    url(r'^auth/',
+        include('payments_service.auth.urls', namespace='auth')),
     url(r'^braintree/',
         include('payments_service.braintree.urls', namespace='braintree')),
     url(r'',

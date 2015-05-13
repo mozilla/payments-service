@@ -44,12 +44,12 @@ class SolitudeBodyguard(APIView):
         # Get the endpoint + method, such as api.services.status.get
         api_request = getattr(self._resource(), method)
 
-        log.info('solitude: about to request %(method) on %(api)'
+        log.info('solitude: about to request {method} on {api}'
                  .format(method=method, api=api_request))
         try:
             result = api_request(*args, **kw)
         except HttpClientError, exc:
-            log.warn('%(api): solitude returned 400: %(details)'
+            log.warn('{api}: solitude returned 400: {details}'
                      .format(api=api_request, details=exc))
             return error_400(exception=exc)
         return Response(result)
