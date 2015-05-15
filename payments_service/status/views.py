@@ -3,7 +3,7 @@ import logging
 from rest_framework.response import Response
 
 from .. import solitude
-from ..base import UnprotectedAPIView
+from ..base.views import UnprotectedAPIView
 
 log = logging.getLogger(__name__)
 

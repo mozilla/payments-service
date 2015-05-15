@@ -30,8 +30,11 @@ ALLOWED_HOSTS = []
 # Application definition
 
 INSTALLED_APPS = (
+    'django.contrib.contenttypes',
+    'django.contrib.sessions',
     'rest_framework',
     'payments_service.auth',
+    'payments_service.base',
     'payments_service.braintree',
     'payments_service.status',
 )
@@ -41,6 +44,17 @@ MIDDLEWARE_CLASSES = (
     'django.middleware.common.CommonMiddleware',
     'django.middleware.security.SecurityMiddleware',
 )
+
+SESSION_ENGINE = 'encrypted_cookies'
+
+# Do not force secure cookies during development.
+SESSION_COOKIE_SECURE = False
+
+SESSION_COOKIE_HTTPONLY = True
+
+SESSION_COOKIE_NAME = 'payservice_sess'
+
+COMPRESS_ENCRYPTED_COOKIE = True
 
 ROOT_URLCONF = 'payments_service.urls'
 
@@ -104,11 +118,10 @@ REST_FRAMEWORK = {
         'rest_framework.parsers.JSONParser',
     ),
     'DEFAULT_AUTHENTICATION_CLASSES': (
-        # TODO: replace with Firefox Accounts auth.
-        'rest_framework.authentication.SessionAuthentication',
+        'payments_service.auth.SessionUserAuthentication',
     ),
     'DEFAULT_PERMISSION_CLASSES': (
-        'rest_framework.permissions.AllowAny',
+        'rest_framework.permissions.IsAuthenticated',
     ),
     'DEFAULT_FILTER_BACKENDS': (
         'rest_framework.filters.DjangoFilterBackend',
@@ -171,6 +184,8 @@ NOSE_ARGS = [
     '--with-blockage',
     '--http-whitelist=""',
 ]
+
+UNDER_TEST = os.environ.get('UNDER_TEST') == '1'
 
 
 # URL to private payment processor. https://github.com/mozilla/solitude/

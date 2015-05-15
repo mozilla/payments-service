@@ -1,8 +1,8 @@
-import os
+from . import base as _base_settings
 from .base import *  # noqa
 try:
-    if os.environ.get('UNDER_TEST') == '1':
-        print 'Not importing local settings under test'
+    if _base_settings.UNDER_TEST:
+        print 'Not importing local settings while under test'
     else:
         from .local import *  # noqa
 except ImportError:

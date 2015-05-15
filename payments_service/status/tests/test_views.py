@@ -3,10 +3,10 @@ from django.core.urlresolvers import reverse
 from nose.tools import eq_
 from slumber.exceptions import HttpServerError
 
-from payments_service.base.tests import SolitudeTest
+from payments_service.base.tests import TestCase
 
 
-class TestStatus(SolitudeTest):
+class TestStatus(TestCase):
 
     def data(self):
         res = self.client.get(reverse('status:index'))

@@ -1,9 +1,9 @@
 import mock
 
-from payments_service.base.tests import SolitudeTest
+from payments_service.base.tests import TestCase
 
 
-class AuthTest(SolitudeTest):
+class AuthTest(TestCase):
 
     def setUp(self):
         super(AuthTest, self).setUp()

@@ -1,5 +1,6 @@
 import json
 
+from django.conf import settings
 from django.conf.urls import patterns, url
 from django.test import TestCase as DjangoTestCase
 from django.test.utils import override_settings
@@ -29,6 +30,17 @@ class APIMock(mock.Mock):
 
 class TestCase(DjangoTestCase):
 
+    def setUp(self):
+        super(TestCase, self).setUp()
+
+        # Since all endpoints pretty much use Solitude, set up the mock
+        # for convenience.
+        p = mock.patch('payments_service.solitude.api', autospec=True)
+        api = p.start()
+        self.addCleanup(p.stop)
+        self.solitude = APIMock()
+        api.return_value = self.solitude
+
     def assert_form_error(self, res, fields=[]):
         eq_(res.status_code, 400, res)
         res, data = self.json(res)
@@ -41,6 +53,32 @@ class TestCase(DjangoTestCase):
 
     def json(self, response):
         return response, json.loads(response.content)
+
+    def prepare_session(self, **kwargs):
+        """
+        Prepare a session before running view code so that the view
+        can access the session values.
+
+        This simulates what Django middleware does at the end of each response.
+        """
+        session = self.client.session
+        session.update(kwargs)
+        session.save()
+        # This loads the encrypted session into the request cookies so that the
+        # view will parse it. The `session_key` is actually the session
+        # contents.
+        self.client.cookies[settings.SESSION_COOKIE_NAME] = session.session_key
+
+
+class AuthenticatedTestCase(TestCase):
+    """
+    Test case for views that require a user login.
+    """
+
+    def setUp(self):
+        super(AuthenticatedTestCase, self).setUp()
+        self.buyer_uuid = 'some-solitude-buyer-uuid'
+        self.prepare_session(buyer_uuid=self.buyer_uuid)
 
 
 # This sets up a module that we can patch dynamically with URLs.
@@ -69,13 +107,3 @@ class WithDynamicEndpoints(DjangoTestCase):
 
     def _clean_up_dynamic_urls(self):
         dynamic_urls.urlpatterns = None
-
-
-class SolitudeTest(TestCase):
-
-    def setUp(self):
-        p = mock.patch('payments_service.solitude.api')
-        api = p.start()
-        self.addCleanup(p.stop)
-        self.solitude = APIMock()
-        api.return_value = self.solitude
