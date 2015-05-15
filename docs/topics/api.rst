@@ -134,3 +134,34 @@ for the client.
 
 .. _`token generator`: https://solitude.readthedocs.org/en/latest/topics/braintree.html#generate-a-token
 .. _`Solitude`: https://github.com/mozilla/solitude/
+
+Subscriptions
+~~~~~~~~~~~~~
+
+This endpoint allows you to work with Braintree plan subscriptions.
+To pay using a new credit card, submit ``pay_method_nonce``. To pay
+with a saved credit card, submit ``pay_method_uri``.
+
+.. http:post:: /api/braintree/subscriptions/
+
+    Create a new buyer subscription.
+
+    **Request**
+
+    :param string pay_method_nonce:
+        A single use token representing the buyer's submitted payment method.
+        In the buy flow, the Braintree JS client intercepts a form
+        submission (e.g. credit card numbers), obfuscates it, and gives us
+        this string.
+    :param string pay_method_uri:
+        Solitude URI to an existing `payment method`_ for this buyer.
+        When paying with a saved card, post this value instead of a nonce.
+    :param string plan_id:
+        Braintree subscription `plan ID`_.
+
+    **Response**
+
+    :status 204: subscription created successfully
+
+.. _`payment method`: https://solitude.readthedocs.org/en/latest/topics/braintree.html#id2
+.. _`plan ID`: https://developers.braintreepayments.com/javascript+python/reference/response/plan
