@@ -6,7 +6,7 @@ api_patterns = [
         include('payments_service.auth.urls', namespace='auth')),
     url(r'^braintree/',
         include('payments_service.braintree.urls', namespace='braintree')),
-    url(r'^$',
+    url(r'',
         include('payments_service.status.urls', namespace='status')),
 ]
 

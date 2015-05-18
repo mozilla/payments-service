@@ -54,7 +54,7 @@ Status
 
 Retrieve overall status of the service.
 
-.. http:get:: /
+.. http:get:: /api/
 
     **Response**:
 
@@ -86,7 +86,7 @@ These endpoints deal with user authentication and authorization.
 Sign-In
 ~~~~~~~
 
-.. http:post:: /auth/sign-in/
+.. http:post:: /api/auth/sign-in/
 
     **Request**
 
@@ -119,7 +119,7 @@ for the client.
 
 .. _`retrieve a token`: https://developers.braintreepayments.com/javascript+python/reference/request/client-token/generate
 
-.. http:post:: /braintree/token/generate/
+.. http:post:: /api/braintree/token/generate/
 
     **Response**:
 
