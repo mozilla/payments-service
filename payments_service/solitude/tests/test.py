@@ -1,12 +1,13 @@
 from nose.tools import eq_, raises
 from slumber.exceptions import HttpClientError, HttpServerError
 
-from payments_service.base.tests import SolitudeTest, WithDynamicEndpoints
+from payments_service.base.tests import (AuthenticatedTestCase,
+                                         WithDynamicEndpoints)
 
 from .. import SolitudeBodyguard
 
 
-class TestSolitudeBodyguard(SolitudeTest, WithDynamicEndpoints):
+class TestSolitudeBodyguard(AuthenticatedTestCase, WithDynamicEndpoints):
 
     def setUp(self):
         super(TestSolitudeBodyguard, self).setUp()

@@ -1,5 +1,16 @@
 from django.http import JsonResponse
 
+from rest_framework.permissions import AllowAny
+from rest_framework.views import APIView
+
+
+class UnprotectedAPIView(APIView):
+    """
+    APIView that does not require the user to be logged in.
+    """
+    authentication_classes = []
+    permission_classes = [AllowAny]
+
 
 def error_400(request=None, **kw):
     return error_response(message='Bad Request', status=400, **kw)

@@ -8,6 +8,9 @@ curling==0.4.1
 # sha256: agPOL-r90ZOguoom29l3PnV9Ll1eeTOmLqwSmBO9OBo
 Django==1.8
 
+# sha256: vvLOJI4qaZ9cKlhG7lV9qmX_xnAiQmSmG7hAMuhuoVY
+django-encrypted-cookie-session==2.0.0
+
 # sha256: jMb9abCD_WP_dy-6QnVit5OCy9FPhN37NA_nab1jL7E
 django-extensions==1.5.2
 
@@ -19,6 +22,9 @@ djangorestframework==3.1.1
 
 # sha256: vGM5kZpSNbnRqu4BHKVGQYQJjwxHyQmAAfkclxdlg_U
 httplib2==0.9.1
+
+# sha256: 4OAGEkrerWRjjMZsPNaTcSLfSgMZ7Yobb7whczHm3JY
+m2secret==0.1.1
 
 # sha256: l5mtnC6N_91J4fMDOTJoU_ttu6Hi_A8mAyMn0b9QRtA
 mock==1.0.1

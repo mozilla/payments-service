@@ -2,10 +2,10 @@ from django.core.urlresolvers import reverse
 
 from nose.tools import eq_
 
-from payments_service.base.tests import SolitudeTest
+from payments_service.base.tests import AuthenticatedTestCase
 
 
-class TestTokenGenerator(SolitudeTest):
+class TestTokenGenerator(AuthenticatedTestCase):
 
     def setUp(self):
         super(TestTokenGenerator, self).setUp()

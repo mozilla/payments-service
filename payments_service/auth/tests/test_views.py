@@ -45,6 +45,7 @@ class TestSignInView(AuthTest):
         eq_(data['buyer_uuid'], 'buyer-uuid')
         self.solitude.generic.buyer.post.assert_called_with(
             {'uuid': 'fxa:{u}'.format(u=self.fxa_user_id)})
+        eq_(self.client.session.get('buyer_uuid'), data['buyer_uuid'])
 
     def test_bad_solitude_response(self):
         err = HttpClientError('Bad Request')
