@@ -5,7 +5,7 @@ import mock
 from nose.tools import eq_
 from slumber.exceptions import HttpClientError
 
-from payments_service.base.tests import AuthenticatedTestCase
+from payments_service.base.tests import AuthenticatedTestCase, TestCase
 
 
 class TestTokenGenerator(AuthenticatedTestCase):
@@ -137,3 +137,18 @@ class TestSubscribe(AuthenticatedTestCase):
     def test_missing_pay_method(self):
         res, data = self.post({'plan_id': self.plan_id})
         self.assert_form_error(res, ['__all__'])
+
+
+class TestWebhook(TestCase):
+
+    def test_verify(self):
+        self.solitude.braintree.webhook.get.return_value = 'token'
+        res = self.client.get(reverse('braintree:webhook'))
+        eq_(res['Content-Type'], 'text/plain; charset=utf-8')
+        eq_(res.status_code, 200)
+        eq_(res.content, 'token')
+
+    def test_parse(self):
+        self.solitude.braintree.webhook.post.return_value = ''
+        res = self.client.post(reverse('braintree:webhook'))
+        eq_(res.status_code, 200)

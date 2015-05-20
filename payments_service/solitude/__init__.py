@@ -52,6 +52,7 @@ class SolitudeBodyguard(APIView):
             log.warn('{api}: solitude returned 400: {details}'
                      .format(api=api_request, details=exc))
             return error_400(exception=exc)
+
         return Response(result)
 
     def _resource(self):
