@@ -114,6 +114,17 @@ class TestSubscribe(AuthenticatedTestCase):
             'plan': self.plan_id,
         })
 
+    def test_too_many_pay_methods(self):
+        self.setup_generic_buyer()
+        pay_method_uri = '/my/saved/paymethod'
+
+        res, data = self.post(data={
+            'pay_method_uri': pay_method_uri,
+            'pay_method_nonce': self.nonce,
+            'plan_id': self.plan_id,
+        })
+        self.assert_form_error(res, ['__all__'])
+
     def test_bad_solitude_request(self):
         self.setup_generic_buyer()
         exc = HttpClientError('bad request')

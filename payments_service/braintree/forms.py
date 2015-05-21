@@ -14,7 +14,12 @@ class SubscriptionForm(forms.Form):
 
     def clean(self):
         cleaned_data = super(SubscriptionForm, self).clean()
-        if (not cleaned_data.get('pay_method_nonce') and
-                not cleaned_data.get('pay_method_uri')):
+        pay_method_nonce = cleaned_data.get('pay_method_nonce')
+        pay_method_uri = cleaned_data.get('pay_method_uri')
+
+        method_missing = not pay_method_uri and not pay_method_nonce
+        too_many_methods = pay_method_uri and pay_method_nonce
+
+        if method_missing or too_many_methods:
             raise forms.ValidationError(
-                'Either pay_method_nonce or pay_method_uri must be submitted')
+                'Either pay_method_nonce or pay_method_uri can be submitted')
