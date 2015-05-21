@@ -52,7 +52,10 @@ class TestCase(DjangoTestCase):
             )
 
     def json(self, response):
-        return response, json.loads(response.content)
+        if response.status_code == 204:
+            return response, None
+        else:
+            return response, json.loads(response.content)
 
     def prepare_session(self, **kwargs):
         """
