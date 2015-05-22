@@ -9,4 +9,5 @@ urlpatterns = patterns(
         name='subscriptions'),
     url(r'^token/generate/$', views.TokenGenerator.as_view(),
         name='token.generate'),
+    url(r'^webhook/$', views.Webhook.as_view(), name='webhook'),
 )

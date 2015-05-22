@@ -165,3 +165,24 @@ with a saved credit card, submit ``pay_method_uri``.
 
 .. _`payment method`: https://solitude.readthedocs.org/en/latest/topics/braintree.html#id2
 .. _`plan ID`: https://developers.braintreepayments.com/javascript+python/reference/response/plan
+
+Webhooks
+~~~~~~~~
+
+When Braintree completes certain actions, webhooks will be sent. For more information
+see the `Braintree documentation <https://developers.braintreepayments.com/javascript+python/reference/general/webhooks>`_.
+
+.. http:get:: /api/braintree/webhook/
+
+    This request and response is the same as Solitudes `webhook API`_,
+    with one exception. The Braintree server sends a HTTP Accept header of `*/*`,
+    which Django Rest Framework interprets as allowing JSON. That's not the
+    case and Braintree needs the token echoed back as `text/plain`. No matter
+    what is set in the Accept headers, this end point will always return
+    `text/plain` to satisfy Braintree.
+
+.. http:post:: /api/braintree/webhook/
+
+    This request and response is the same as Solitudes `webhook API`_.
+
+.. _`webhook API`: http://solitude.readthedocs.org/en/latest/topics/braintree.html#webhook

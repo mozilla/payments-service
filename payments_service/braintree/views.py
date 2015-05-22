@@ -3,11 +3,12 @@ import logging
 from django.core.exceptions import ObjectDoesNotExist
 
 from rest_framework.views import APIView
+from rest_framework.renderers import BaseRenderer
 from rest_framework.response import Response
 from slumber.exceptions import HttpClientError
 
 from .. import solitude
-from ..base.views import error_400
+from ..base.views import error_400, UnprotectedAPIView
 from ..solitude import SolitudeBodyguard
 from .forms import SubscriptionForm
 
@@ -80,3 +81,36 @@ class Subscriptions(APIView):
             log.info('creating new braintree customer for {buyer}'
                      .format(buyer=buyer_uuid))
             self.api.braintree.customer.post({'uuid': buyer_uuid})
+
+
+class PlainTextRenderer(BaseRenderer):
+    media_type = 'text/plain'
+    format = 'txt'
+
+    def render(self, data, media_type=None, renderer_context=None):
+        return data.encode(self.charset)
+
+
+class Webhook(UnprotectedAPIView, SolitudeBodyguard):
+    methods = ['post', 'get']
+    resource = 'braintree.webhook'
+
+    def perform_content_negotiation(self, request, **kw):
+        """
+        Braintree sends a request that has an Accept Header of
+        u'*/*; q=0.5', u'application/xml', but we need to force
+        DRF to return it as text/plain. The only way we can do that
+        is to override the content negotiation and insert our rather
+        boring plain text renderer.
+
+        See https://github.com/braintree/braintree_python/issues/54
+        """
+        if request.method.lower() == 'get':
+            renderer = PlainTextRenderer()
+            return (renderer, renderer.media_type)
+        return (super(self.__class__, self)
+                .perform_content_negotiation(request, **kw))
+
+    def get(self, request, **kw):
+        return super(self.__class__, self).get(
+            request, **dict(request.QUERY_PARAMS.items()))
