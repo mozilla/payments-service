@@ -36,11 +36,10 @@ class Subscriptions(APIView):
         if not form.is_valid():
             return error_400(response=form.errors)
 
-        buyer_uuid = request.user.uuid
         try:
-            self.set_up_customer(buyer_uuid)
+            self.set_up_customer(request.user)
             pay_method_uri = self.get_pay_method(
-                buyer_uuid,
+                request.user,
                 form.cleaned_data['pay_method_uri'],
                 form.cleaned_data['pay_method_nonce'])
 
@@ -54,34 +53,31 @@ class Subscriptions(APIView):
 
         return Response({}, status=204)
 
-    def get_pay_method(self, buyer_uuid, pay_method_uri, pay_method_nonce):
+    def get_pay_method(self, buyer, pay_method_uri, pay_method_nonce):
         if not pay_method_uri:
             log.info('creating new payment method for buyer {b}'
-                     .format(b=buyer_uuid))
+                     .format(b=buyer.uuid))
             pay_method = self.api.braintree.paymethod.post({
-                'buyer_uuid': buyer_uuid,
+                'buyer_uuid': buyer.uuid,
                 'nonce': pay_method_nonce,
             })
             pay_method_uri = pay_method['mozilla']['resource_uri']
         else:
             log.info('paying with saved payment method {m} for buyer {b}'
-                     .format(b=buyer_uuid, m=pay_method_uri))
+                     .format(b=buyer.uuid, m=pay_method_uri))
 
         return pay_method_uri
 
-    def set_up_customer(self, buyer_uuid):
-        # TODO: This can be simplified after:
-        # https://github.com/mozilla/payments-service/issues/22
-        buyer = self.api.generic.buyer.get_object_or_404(uuid=buyer_uuid)
+    def set_up_customer(self, buyer):
         try:
-            resource = self.api.braintree.mozilla.buyer(buyer['resource_pk'])
+            resource = self.api.braintree.mozilla.buyer(buyer.pk)
             resource.get_object_or_404()
             log.info('using existing braintree customer tied to buyer {b}'
                      .format(b=buyer))
         except ObjectDoesNotExist:
             log.info('creating new braintree customer for {buyer}'
-                     .format(buyer=buyer_uuid))
-            self.api.braintree.customer.post({'uuid': buyer_uuid})
+                     .format(buyer=buyer.pk))
+            self.api.braintree.customer.post({'uuid': buyer.uuid})
 
 
 class PlainTextRenderer(BaseRenderer):

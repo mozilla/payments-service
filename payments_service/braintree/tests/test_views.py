@@ -64,9 +64,6 @@ class TestSubscribe(AuthenticatedTestCase):
         res, data = self.post()
         eq_(res.status_code, 204, res)
 
-        get = self.solitude.generic.buyer.get_object_or_404
-        get.assert_called_with(uuid=self.buyer_uuid)
-
         self.solitude.braintree.mozilla.buyer.assert_called_with(buyer_pk)
         assert not self.solitude.braintree.customer.post.called
 
