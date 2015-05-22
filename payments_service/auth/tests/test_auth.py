@@ -22,9 +22,11 @@ class TestSessionUserAuth(TestCase):
 
     def test_auth_with_buyer_uuid(self):
         uuid = 'some-uuid'
-        user, auth = self.authenticate(buyer_uuid=uuid)
-        eq_(user.pk, uuid)
-        eq_(user.id, uuid)
+        pk = 1
+        user, auth = self.authenticate(buyer_uuid=uuid, buyer_pk=pk)
+        eq_(user.uuid, uuid)
+        eq_(user.pk, pk)
+        eq_(user.id, pk)
 
 
 class DefaultView(APIView):
@@ -48,6 +50,6 @@ class TestDefaultViewProtection(TestCase, WithDynamicEndpoints):
             'You do not have permission to perform this action.')
 
     def test_view_access_granted(self):
-        self.prepare_session(buyer_uuid='some-uuid')
+        self.prepare_session(buyer_uuid='some-uuid', buyer_pk=1)
         res, data = self.get()
         eq_(res.status_code, 200, res)

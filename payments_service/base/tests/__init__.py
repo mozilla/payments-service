@@ -80,8 +80,10 @@ class AuthenticatedTestCase(TestCase):
 
     def setUp(self):
         super(AuthenticatedTestCase, self).setUp()
+        self.buyer_pk = 1
         self.buyer_uuid = 'some-solitude-buyer-uuid'
-        self.prepare_session(buyer_uuid=self.buyer_uuid)
+        self.prepare_session(buyer_uuid=self.buyer_uuid,
+                             buyer_pk=self.buyer_pk)
 
 
 # This sets up a module that we can patch dynamically with URLs.
