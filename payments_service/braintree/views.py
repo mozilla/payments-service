@@ -36,7 +36,7 @@ class Subscriptions(APIView):
         if not form.is_valid():
             return error_400(response=form.errors)
 
-        buyer_uuid = request.user.pk
+        buyer_uuid = request.user.uuid
         try:
             self.set_up_customer(buyer_uuid)
             pay_method_uri = self.get_pay_method(

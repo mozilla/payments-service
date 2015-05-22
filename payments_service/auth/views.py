@@ -42,6 +42,9 @@ class SignInView(UnprotectedAPIView):
                 u'FxA user={fxa_uuid}'.format(exc=exc, fxa_uuid=fxa_uuid))
             return error_400(exception=exc)
 
+        request.session['buyer_pk'] = buyer['resource_pk']
         request.session['buyer_uuid'] = buyer['uuid']
 
-        return Response({'buyer_uuid': buyer['uuid']}, status=status)
+        return Response(
+            {'buyer_uuid': buyer['uuid'], 'buyer_pk': buyer['resource_pk']},
+            status=status)

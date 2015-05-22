@@ -26,11 +26,12 @@ class TestSignInView(AuthTest):
     def test_existing_solitude_buyer(self):
         self.solitude.generic.buyer.get_object.return_value = {
             'uuid': 'buyer-uuid',
+            'resource_pk': 1
         }
 
         res, data = self.post()
         eq_(res.status_code, 200, res)
-        eq_(data['buyer_uuid'], 'buyer-uuid')
+        eq_(data, {'buyer_uuid': 'buyer-uuid', 'buyer_pk': 1})
         self.solitude.generic.buyer.get_object.assert_called_with(
             uuid='fxa:{u}'.format(u=self.fxa_user_id))
 
@@ -38,14 +39,16 @@ class TestSignInView(AuthTest):
         self.solitude.generic.buyer.get_object.side_effect = ObjectDoesNotExist
         self.solitude.generic.buyer.post.return_value = {
             'uuid': 'buyer-uuid',
+            'resource_pk': 1
         }
 
         res, data = self.post()
         eq_(res.status_code, 201, res)
-        eq_(data['buyer_uuid'], 'buyer-uuid')
+        eq_(data, {'buyer_uuid': 'buyer-uuid', 'buyer_pk': 1})
         self.solitude.generic.buyer.post.assert_called_with(
             {'uuid': 'fxa:{u}'.format(u=self.fxa_user_id)})
         eq_(self.client.session.get('buyer_uuid'), data['buyer_uuid'])
+        eq_(self.client.session.get('buyer_pk'), data['buyer_pk'])
 
     def test_bad_solitude_response(self):
         err = HttpClientError('Bad Request')
