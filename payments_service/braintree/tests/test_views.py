@@ -5,6 +5,7 @@ import mock
 from nose.tools import eq_
 from slumber.exceptions import HttpClientError
 
+from payments_service.solitude import constants
 from payments_service.base.tests import AuthenticatedTestCase, TestCase
 
 
@@ -48,6 +49,18 @@ class TestSubscribe(AuthenticatedTestCase):
         }
         return buyer_pk
 
+    def setup_transaction(self):
+        self.solitude.generic.product.get_object_or_404.return_value = {
+            'seller': '/generic/seller/123/',
+            'resource_uri': '/generic/product/456/'
+        }
+        self.solitude.generic.transaction.post.return_value = {
+            'resource_pk': '/generic/transaction/789/'
+        }
+        transaction_mock = mock.Mock(name='transaction.mock')
+        self.solitude.generic.transaction.return_value = transaction_mock
+        return transaction_mock
+
     def expect_new_pay_method(self):
         pay_method_uri = '/some/paymethod'
         self.solitude.braintree.paymethod.post.return_value = {
@@ -58,6 +71,7 @@ class TestSubscribe(AuthenticatedTestCase):
         return pay_method_uri
 
     def test_with_existing_customer(self):
+        self.setup_transaction()
         buyer_pk = self.setup_generic_buyer()
         self.expect_new_pay_method()
 
@@ -73,6 +87,7 @@ class TestSubscribe(AuthenticatedTestCase):
         })
 
     def test_with_new_customer(self):
+        self.setup_transaction()
         self.setup_generic_buyer()
         self.expect_new_pay_method()
 
@@ -87,6 +102,7 @@ class TestSubscribe(AuthenticatedTestCase):
         assert self.solitude.braintree.customer.post.called
 
     def test_with_new_pay_method(self):
+        self.setup_transaction()
         self.setup_generic_buyer()
         pay_method_uri = self.expect_new_pay_method()
 
@@ -99,6 +115,7 @@ class TestSubscribe(AuthenticatedTestCase):
         })
 
     def test_with_existing_pay_method(self):
+        self.setup_transaction()
         self.setup_generic_buyer()
         pay_method_uri = '/my/saved/paymethod'
 
@@ -112,6 +129,7 @@ class TestSubscribe(AuthenticatedTestCase):
         })
 
     def test_too_many_pay_methods(self):
+        self.setup_transaction()
         self.setup_generic_buyer()
         pay_method_uri = '/my/saved/paymethod'
 
@@ -123,6 +141,7 @@ class TestSubscribe(AuthenticatedTestCase):
         self.assert_form_error(res, ['__all__'])
 
     def test_bad_solitude_request(self):
+        self.setup_transaction()
         self.setup_generic_buyer()
         exc = HttpClientError('bad request')
         exc.content = {'nonce': ['This field is required.']}
@@ -130,6 +149,45 @@ class TestSubscribe(AuthenticatedTestCase):
 
         res, data = self.post()
         self.assert_form_error(res, ['nonce'])
+
+    def test_transaction_errored(self):
+        transaction_mock = self.setup_transaction()
+        self.setup_generic_buyer()
+        exc = HttpClientError('bad request')
+        exc.content = {'nonce': ['This field is required.']}
+        self.solitude.braintree.paymethod.post.side_effect = exc
+
+        res, data = self.post()
+        self.solitude.generic.transaction.post
+        transaction_mock.patch.assert_called_with({
+            'status': constants.STATUS_ERRORED,
+            'status_reason': 'SETUP_ERROR'})
+
+    def test_transaction_created(self):
+        transaction_mock = self.setup_transaction()
+        self.setup_generic_buyer()
+        self.expect_new_pay_method()
+
+        res, data = self.post()
+        eq_(res.status_code, 204, res)
+        self.solitude.generic.transaction.post.assert_called_with({
+            'status': constants.STATUS_STARTED,
+            'seller_product': '/generic/product/456/',
+            'provider': constants.PROVIDER_BRAINTREE,
+            'buyer': '/generic/buyer/1234/',
+            'seller': '/generic/seller/123/',
+            'type': constants.TYPE_PAYMENT
+        })
+
+    def test_transaction_succeeded(self):
+        transaction_mock = self.setup_transaction()
+        self.setup_generic_buyer()
+        self.expect_new_pay_method()
+
+        res, data = self.post()
+        eq_(res.status_code, 204, res)
+        transaction_mock.patch.assert_called_with({
+            'status': constants.STATUS_COMPLETED})
 
     def test_missing_pay_method(self):
         res, data = self.post({'plan_id': self.plan_id})
