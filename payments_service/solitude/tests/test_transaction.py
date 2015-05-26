@@ -50,7 +50,9 @@ class TestTransaction(TransactionTestCase):
         return obj
 
     def test_reset(self):
-        self.create().reset()
+        obj = self.create()
+        obj.reset()
+        eq_(obj.id, None)
         ok_(Transaction.key not in self.session)
 
     def test_update(self):
