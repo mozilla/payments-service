@@ -11,8 +11,11 @@ class SolitudeBuyer(AnonymousUser):
     """
     Fake Django user to represent a Solitude buyer.
 
-    You can access `user.uuid` to get the Solitude UUID.
-    You can access `user.pk` to get the Solitude resource pk.
+    Properties:
+
+    * `uuid`: the Solitude UUID.
+    * `pk`: the Solitude pk.
+    * `uri`: the Solitude uri.
     """
     id = pk = uuid = None
     is_active = True
@@ -20,6 +23,7 @@ class SolitudeBuyer(AnonymousUser):
     def __init__(self, buyer_uuid, buyer_pk):
         self.pk = self.id = buyer_pk
         self.uuid = buyer_uuid
+        self.uri = '/generic/buyer/{0}/'.format(self.pk)
 
     def is_anonymous(self):
         return False

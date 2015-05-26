@@ -10,6 +10,7 @@ from slumber.exceptions import HttpClientError
 from .. import solitude
 from ..base.views import error_400, UnprotectedAPIView
 from ..solitude import SolitudeBodyguard
+from ..solitude.transaction import Transaction
 from .forms import SubscriptionForm
 
 log = logging.getLogger(__name__)
@@ -36,52 +37,58 @@ class Subscriptions(APIView):
         if not form.is_valid():
             return error_400(response=form.errors)
 
-        buyer_uuid = request.user.uuid
-        try:
-            self.set_up_customer(buyer_uuid)
-            pay_method_uri = self.get_pay_method(
-                buyer_uuid,
-                form.cleaned_data['pay_method_uri'],
-                form.cleaned_data['pay_method_nonce'])
+        transaction = Transaction(request.session)
+        # Should we re-enter old transactions, remove them from the session on
+        # error or success or just force a new one? For now let's just force
+        # a reset.
+        # https://github.com/mozilla/payments-service/issues/33
+        transaction.reset()
+        transaction.create(request.user, form.cleaned_data['plan_id'])
 
+        try:
+            self.set_up_customer(request.user)
+            pay_method_uri = self.get_pay_method(
+                request.user,
+                form.cleaned_data['pay_method_uri'],
+                form.cleaned_data['pay_method_nonce']
+            )
             self.api.braintree.subscription.post({
                 'paymethod': pay_method_uri,
                 'plan': form.cleaned_data['plan_id'],
             })
         except HttpClientError, exc:
             log.debug('caught bad request from solitude: {e}'.format(e=exc))
+            transaction.errored('SETUP_ERROR')
             return error_400(exception=exc)
 
+        transaction.succeeded()
         return Response({}, status=204)
 
-    def get_pay_method(self, buyer_uuid, pay_method_uri, pay_method_nonce):
+    def get_pay_method(self, buyer, pay_method_uri, pay_method_nonce):
         if not pay_method_uri:
             log.info('creating new payment method for buyer {b}'
-                     .format(b=buyer_uuid))
+                     .format(b=buyer.uuid))
             pay_method = self.api.braintree.paymethod.post({
-                'buyer_uuid': buyer_uuid,
+                'buyer_uuid': buyer.uuid,
                 'nonce': pay_method_nonce,
             })
             pay_method_uri = pay_method['mozilla']['resource_uri']
         else:
             log.info('paying with saved payment method {m} for buyer {b}'
-                     .format(b=buyer_uuid, m=pay_method_uri))
+                     .format(b=buyer.uuid, m=pay_method_uri))
 
         return pay_method_uri
 
-    def set_up_customer(self, buyer_uuid):
-        # TODO: This can be simplified after:
-        # https://github.com/mozilla/payments-service/issues/22
-        buyer = self.api.generic.buyer.get_object_or_404(uuid=buyer_uuid)
+    def set_up_customer(self, buyer):
         try:
-            resource = self.api.braintree.mozilla.buyer(buyer['resource_pk'])
-            resource.get_object_or_404()
+            self.api.braintree.mozilla.buyer.get_object_or_404(
+                buyer=buyer.pk)
             log.info('using existing braintree customer tied to buyer {b}'
                      .format(b=buyer))
         except ObjectDoesNotExist:
             log.info('creating new braintree customer for {buyer}'
-                     .format(buyer=buyer_uuid))
-            self.api.braintree.customer.post({'uuid': buyer_uuid})
+                     .format(buyer=buyer.pk))
+            self.api.braintree.customer.post({'uuid': buyer.uuid})
 
 
 class PlainTextRenderer(BaseRenderer):

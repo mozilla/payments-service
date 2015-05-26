@@ -96,8 +96,9 @@ Sign-In
         wishes to sell a product. The token must be scoped for **payments**
         otherwise you will receive an error response.
 
-    :>json string buyer_uuid: `Solitude buyer`_ identifier
-
+    :>json string buyer_uuid: `Solitude buyer`_ uuid identifier
+    :>json string buyer_pk: `Solitude buyer`_ pk identifier
+    
     :status 200: returning buyer authenticated successfully.
     :status 201: first time buyer authenticated successfully.
 
