@@ -68,5 +68,6 @@ class Transaction(object):
         """
         try:
             del self.session[self.key]
+            log.debug('Removed existing transaction from the session.')
         except KeyError:
             pass

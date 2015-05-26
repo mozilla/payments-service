@@ -38,6 +38,11 @@ class Subscriptions(APIView):
             return error_400(response=form.errors)
 
         transaction = Transaction(request.session)
+        # Should we re-enter old transactions, remove them from the session on
+        # error or success or just force a new one? For now let's just force
+        # a reset.
+        # https://github.com/mozilla/payments-service/issues/33
+        transaction.reset()
         transaction.create(request.user, form.cleaned_data['plan_id'])
 
         try:
@@ -76,8 +81,8 @@ class Subscriptions(APIView):
 
     def set_up_customer(self, buyer):
         try:
-            resource = self.api.braintree.mozilla.buyer(buyer.pk)
-            resource.get_object_or_404()
+            self.api.braintree.mozilla.buyer.get_object_or_404(
+                buyer=buyer.pk)
             log.info('using existing braintree customer tied to buyer {b}'
                      .format(b=buyer))
         except ObjectDoesNotExist:

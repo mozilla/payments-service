@@ -1,12 +1,12 @@
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.urlresolvers import reverse
 
-import mock
 from nose.tools import eq_
 from slumber.exceptions import HttpClientError
 
-from payments_service.solitude import constants
 from payments_service.base.tests import AuthenticatedTestCase, TestCase
+from payments_service.solitude import constants
+from payments_service.solitude.tests import TransactionTestCase
 
 
 class TestTokenGenerator(AuthenticatedTestCase):
@@ -30,7 +30,7 @@ class TestTokenGenerator(AuthenticatedTestCase):
         eq_(data['token'], 'some-token')
 
 
-class TestSubscribe(AuthenticatedTestCase):
+class TestSubscribe(TransactionTestCase):
     nonce = 'some-braintree-nonce'
     plan_id = 'some-braintree-plan'
 
@@ -49,18 +49,6 @@ class TestSubscribe(AuthenticatedTestCase):
         }
         return buyer_pk
 
-    def setup_transaction(self):
-        self.solitude.generic.product.get_object_or_404.return_value = {
-            'seller': '/generic/seller/123/',
-            'resource_uri': '/generic/product/456/'
-        }
-        self.solitude.generic.transaction.post.return_value = {
-            'resource_pk': '/generic/transaction/789/'
-        }
-        transaction_mock = mock.Mock(name='transaction.mock')
-        self.solitude.generic.transaction.return_value = transaction_mock
-        return transaction_mock
-
     def expect_new_pay_method(self):
         pay_method_uri = '/some/paymethod'
         self.solitude.braintree.paymethod.post.return_value = {
@@ -71,14 +59,14 @@ class TestSubscribe(AuthenticatedTestCase):
         return pay_method_uri
 
     def test_with_existing_customer(self):
-        self.setup_transaction()
         buyer_pk = self.setup_generic_buyer()
         self.expect_new_pay_method()
 
         res, data = self.post()
         eq_(res.status_code, 204, res)
 
-        self.solitude.braintree.mozilla.buyer.assert_called_with(buyer_pk)
+        (self.solitude.braintree.mozilla.buyer.get_object_or_404
+         .assert_called_with(buyer=buyer_pk))
         assert not self.solitude.braintree.customer.post.called
 
         self.solitude.braintree.paymethod.post.assert_called_with({
@@ -87,14 +75,12 @@ class TestSubscribe(AuthenticatedTestCase):
         })
 
     def test_with_new_customer(self):
-        self.setup_transaction()
         self.setup_generic_buyer()
         self.expect_new_pay_method()
 
         # Set up non-existing braintree customer.
-        buyer_resource = mock.Mock()
-        self.solitude.braintree.mozilla.buyer.return_value = buyer_resource
-        buyer_resource.get_object_or_404.side_effect = ObjectDoesNotExist
+        self.solitude.braintree.mozilla.buyer.get_object_or_404.side_effect = (
+            ObjectDoesNotExist)
 
         res, data = self.post()
         eq_(res.status_code, 204, res)
@@ -102,7 +88,6 @@ class TestSubscribe(AuthenticatedTestCase):
         assert self.solitude.braintree.customer.post.called
 
     def test_with_new_pay_method(self):
-        self.setup_transaction()
         self.setup_generic_buyer()
         pay_method_uri = self.expect_new_pay_method()
 
@@ -115,7 +100,6 @@ class TestSubscribe(AuthenticatedTestCase):
         })
 
     def test_with_existing_pay_method(self):
-        self.setup_transaction()
         self.setup_generic_buyer()
         pay_method_uri = '/my/saved/paymethod'
 
@@ -129,7 +113,6 @@ class TestSubscribe(AuthenticatedTestCase):
         })
 
     def test_too_many_pay_methods(self):
-        self.setup_transaction()
         self.setup_generic_buyer()
         pay_method_uri = '/my/saved/paymethod'
 
@@ -141,7 +124,6 @@ class TestSubscribe(AuthenticatedTestCase):
         self.assert_form_error(res, ['__all__'])
 
     def test_bad_solitude_request(self):
-        self.setup_transaction()
         self.setup_generic_buyer()
         exc = HttpClientError('bad request')
         exc.content = {'nonce': ['This field is required.']}
@@ -151,20 +133,17 @@ class TestSubscribe(AuthenticatedTestCase):
         self.assert_form_error(res, ['nonce'])
 
     def test_transaction_errored(self):
-        transaction_mock = self.setup_transaction()
         self.setup_generic_buyer()
         exc = HttpClientError('bad request')
         exc.content = {'nonce': ['This field is required.']}
         self.solitude.braintree.paymethod.post.side_effect = exc
 
         res, data = self.post()
-        self.solitude.generic.transaction.post
-        transaction_mock.patch.assert_called_with({
+        self.transaction_mock.patch.assert_called_with({
             'status': constants.STATUS_ERRORED,
             'status_reason': 'SETUP_ERROR'})
 
     def test_transaction_created(self):
-        transaction_mock = self.setup_transaction()
         self.setup_generic_buyer()
         self.expect_new_pay_method()
 
@@ -180,13 +159,12 @@ class TestSubscribe(AuthenticatedTestCase):
         })
 
     def test_transaction_succeeded(self):
-        transaction_mock = self.setup_transaction()
         self.setup_generic_buyer()
         self.expect_new_pay_method()
 
         res, data = self.post()
         eq_(res.status_code, 204, res)
-        transaction_mock.patch.assert_called_with({
+        self.transaction_mock.patch.assert_called_with({
             'status': constants.STATUS_COMPLETED})
 
     def test_missing_pay_method(self):
