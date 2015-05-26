@@ -49,6 +49,7 @@ class Subscriptions(APIView):
                 'plan': form.cleaned_data['plan_id'],
             })
         except HttpClientError, exc:
+            log.debug('caught bad request from solitude: {e}'.format(e=exc))
             return error_400(exception=exc)
 
         return Response({}, status=204)

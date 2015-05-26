@@ -44,8 +44,8 @@ class SolitudeBodyguard(APIView):
         # Get the endpoint + method, such as api.services.status.get
         api_request = getattr(self._resource(), method)
 
-        log.info('solitude: about to request {method} on {api}'
-                 .format(method=method, api=api_request))
+        log.info('solitude: about to request {resource}.{method}'
+                 .format(method=method, resource=self.resource))
         try:
             result = api_request(*args, **kw)
         except HttpClientError, exc:
