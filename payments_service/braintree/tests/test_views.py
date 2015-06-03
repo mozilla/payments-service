@@ -30,6 +30,41 @@ class TestTokenGenerator(AuthenticatedTestCase):
         eq_(data['token'], 'some-token')
 
 
+class TestPayMethod(AuthenticatedTestCase):
+
+    def setUp(self):
+        super(TestPayMethod, self).setUp()
+        self.url = reverse('braintree:mozilla.paymethod')
+        self.pay_method = {'id': 1}  # pretend this is a paymethod object
+        self.solitude.braintree.mozilla.paymethod.get.return_value = [
+            self.pay_method,
+        ]
+
+    def get(self, query=None):
+        url = self.url
+        if query:
+            url = '{url}?{query}'.format(url=url, query=query)
+        return self.json(self.client.get(url))
+
+    def test_arg_replacement(self):
+        # Add some throw-away query parameters that will be replaced.
+        res, data = self.get(query='braintree_buyer__buyer__uuid=nope')
+
+        eq_(res.status_code, 200, res)
+        eq_(data, [self.pay_method])
+        call_args = self.solitude.braintree.mozilla.paymethod.get.call_args
+        eq_(call_args,
+            [tuple(),
+             {'active': 1, 'braintree_buyer__buyer__uuid': self.buyer_uuid}])
+
+    def test_override_active_flag(self):
+        res, data = self.get(query='active=0')
+
+        eq_(res.status_code, 200, res)
+        call_args = self.solitude.braintree.mozilla.paymethod.get.call_args
+        eq_(call_args[1]['active'], '0')
+
+
 class TestSubscribe(TransactionTestCase):
     nonce = 'some-braintree-nonce'
     plan_id = 'some-braintree-plan'

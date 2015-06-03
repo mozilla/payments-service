@@ -24,6 +24,29 @@ class TokenGenerator(SolitudeBodyguard):
     resource = 'braintree.token.generate'
 
 
+class PayMethod(SolitudeBodyguard):
+    """
+    Get saved payment methods for the logged in buyer.
+    """
+    methods = ['get']
+    resource = 'braintree.mozilla.paymethod'
+
+    def replace_call_args(self, request, args, kw):
+        """
+        Replace the GET parameters with custom values.
+
+        This sets the right default parameters that we
+        want to send to Solitude, allowing for some overrides.
+        The important part is that it only lets you get
+        payment methods for the logged in user.
+        """
+        replaced_kw = {
+            'active': kw.get('active', 1),  # active by default
+            'braintree_buyer__buyer__uuid': request.user.uuid,
+        }
+        return tuple(), replaced_kw
+
+
 class Subscriptions(APIView):
     """
     Deals with Braintree plan subscriptions.

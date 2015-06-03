@@ -37,15 +37,50 @@ class SolitudeBodyguard(APIView):
     # resource = 'services.status'
     resource = None
 
-    def _api_request(self, method, *args, **kw):
+    def replace_call_args(self, django_request, args, kw):
+        """
+        Optional hook to replace the arguments before executing the
+        slumber callable.
+
+        Arguments:
+
+        *django_request*
+            Original Django request object.
+
+        *args*
+            Original slumber API call arguments.
+            Example: some.api.endpoint.get(id) or some.api.endpoint.post(data)
+
+        *kw*
+            Original slumber API call keyword arguments.
+            Example: some.api.endpoint.get(query_param='value')
+
+        Return value: a tuple of (args, kw) that should be
+        passed to the API callable.
+
+        By default this just returns the original arguments.
+        """
+        return args, kw
+
+    def get(self, request):
+        return self._api_request(request, 'get', **request.REQUEST)
+
+    def post(self, request):
+        return self._api_request(request, 'post', request.data or {})
+
+    def _api_request(self, django_request, method, *args, **kw):
         if method.lower() not in self.methods:
             return error_405()
 
         # Get the endpoint + method, such as api.services.status.get
         api_request = getattr(self._resource(), method)
 
-        log.info('solitude: about to request {resource}.{method}'
-                 .format(method=method, resource=self.resource))
+        # Allow this view to replace call args if it wants to.
+        args, kw = self.replace_call_args(django_request, args, kw)
+
+        log.info('solitude: about to request {resource}.{method}{args}{kw}'
+                 .format(method=method, resource=self.resource,
+                         args=args, kw=kw))
         try:
             result = api_request(*args, **kw)
         except HttpClientError, exc:
@@ -73,9 +108,3 @@ class SolitudeBodyguard(APIView):
         while len(url_paths):
             resource = getattr(resource, url_paths.pop(0))
         return resource
-
-    def get(self, request, **kw):
-        return self._api_request('get', **kw)
-
-    def post(self, request, **kw):
-        return self._api_request('post', request.data or {}, **kw)

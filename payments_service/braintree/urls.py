@@ -9,5 +9,7 @@ urlpatterns = patterns(
         name='subscriptions'),
     url(r'^token/generate/$', views.TokenGenerator.as_view(),
         name='token.generate'),
+    url(r'^mozilla/paymethod/$', views.PayMethod.as_view(),
+        name='mozilla.paymethod'),
     url(r'^webhook/$', views.Webhook.as_view(), name='webhook'),
 )
