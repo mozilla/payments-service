@@ -98,7 +98,7 @@ Sign-In
 
     :>json string buyer_uuid: `Solitude buyer`_ uuid identifier
     :>json string buyer_pk: `Solitude buyer`_ pk identifier
-    
+
     :status 200: returning buyer authenticated successfully.
     :status 201: first time buyer authenticated successfully.
 
@@ -135,6 +135,47 @@ for the client.
 
 .. _`token generator`: https://solitude.readthedocs.org/en/latest/topics/braintree.html#generate-a-token
 .. _`Solitude`: https://github.com/mozilla/solitude/
+
+Payment Methods
+~~~~~~~~~~~~~~~
+
+This endpoint lets you retrieve saved `Braintree payment methods`_
+for the currently logged in user. After a user submits payment,
+their method of payment (e.g. a credit card) is saved for future purchases.
+
+.. http:get:: /api/braintree/mozilla/paymethod/
+
+    **Request**
+
+    :param boolean active:
+        When true (the default), only retrieve active payment methods.
+
+    **Response**
+
+    .. code-block:: json
+
+        [
+            {
+                "id": 1,
+                "resource_pk": 1,
+                "resource_uri": "/braintree/mozilla/paymethod/1/",
+                "type": 1,
+                "type_name": "Visa",
+                "truncated_id": "1111",
+                "provider_id": "49fv4m",
+                "braintree_buyer": "/braintree/mozilla/buyer/1/",
+                "counter": 0,
+                "active": true,
+                "created": "2015-06-02T15:20:03",
+                "modified": "2015-06-02T15:20:03"
+            }
+        ]
+
+    See the Solitude docs on `payment methods`_ for detailed documentation of
+    this return value.
+
+.. _`Braintree payment methods`: https://developers.braintreepayments.com/javascript+python/guides/payment-methods
+.. _`payment methods`: https://solitude.readthedocs.org/en/latest/topics/braintree.html#id2
 
 Subscriptions
 ~~~~~~~~~~~~~

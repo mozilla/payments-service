@@ -1,3 +1,5 @@
+from urllib import urlencode
+
 from nose.tools import eq_, raises
 from slumber.exceptions import HttpClientError, HttpServerError
 
@@ -30,7 +32,12 @@ class TestSolitudeBodyguard(AuthenticatedTestCase, WithDynamicEndpoints):
         return self._request('post', params, **kw)
 
     def _request(self, method, *args, **kw):
-        res = getattr(self.client, method)('/dynamic-endpoint', *args, **kw)
+        url = '/dynamic-endpoint'
+        query_params = kw.pop('query_params', None)
+        if query_params:
+            url = '{url}?{query}'.format(url=url,
+                                         query=urlencode(query_params))
+        res = getattr(self.client, method)(url, *args, **kw)
         return self.json(res)
 
     def test_disallow_post(self):
@@ -64,10 +71,33 @@ class TestSolitudeBodyguard(AuthenticatedTestCase, WithDynamicEndpoints):
     def test_pass_post_params_to_solitude(self):
         params = {'foo': '1', 'bar': 'baz'}
         self.post(params)
-        assert self.solitude.services.status.post.called
         call_args = self.solitude.services.status.post.call_args
         eq_(call_args[0][0]['foo'], params['foo'])
         eq_(call_args[0][0]['bar'], params['bar'])
+
+    def test_pass_get_params_to_solitude(self):
+        params = {'foo': '1', 'bar': 'baz'}
+        self.get(query_params=params)
+        call_args = self.solitude.services.status.get.call_args
+        eq_(call_args[1]['foo'], params['foo'])
+        eq_(call_args[1]['bar'], params['bar'])
+
+    def test_replace_call_args(self):
+        new_args = ('one', 'two')
+        new_kw = {'other': 'something'}
+
+        class Replacer(SolitudeBodyguard):
+            methods = ['get']
+            resource = 'services.status'
+
+            def replace_call_args(self, django_request, args, kw):
+                return new_args, new_kw
+
+        self.endpoint(Replacer)
+
+        self.get(query_params={'foo': 1})
+        call_args = self.solitude.services.status.get.call_args
+        eq_(call_args, [new_args, new_kw])
 
     def test_proxy_solitude_response(self):
         self.solitude.services.status.get.return_value = {
