@@ -15,7 +15,7 @@ class AuthTest(TestCase):
 
     def set_fxa_response(self, scope=None):
         if scope is None:
-            scope = ['profile', 'payments']
+            scope = ['profile:email', 'payments']
         mock_response = mock.Mock()
         mock_response.json.return_value = {
             'user': self.fxa_user_id,
