@@ -3,14 +3,18 @@
 FROM mozillamarketplace/centos-mysql-mkt:0.2
 RUN yum install -y supervisor bash-completion && yum clean all
 
-# Ship the source in the container.
-COPY . /srv/payments-service
+# Copy requirements over first to cache peep install.
+COPY requirements /srv/payments-service/requirements
 
 RUN pip install --find-links https://pyrepo.addons.mozilla.org/ peep
 # TODO: add caching when available. https://github.com/erikrose/peep/issues/93
 RUN peep install \
     --no-deps -r /srv/payments-service/requirements/dev.txt \
     --find-links https://pyrepo.addons.mozilla.org/
+
+
+# Ship the source in the container.
+COPY . /srv/payments-service
 
 EXPOSE 8000
 
