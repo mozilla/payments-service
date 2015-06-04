@@ -10,7 +10,6 @@ from slumber.exceptions import HttpClientError
 from .. import solitude
 from ..base.views import error_400, UnprotectedAPIView
 from ..solitude import SolitudeBodyguard
-from ..solitude.transaction import Transaction
 from .forms import SubscriptionForm
 
 log = logging.getLogger(__name__)
@@ -60,14 +59,6 @@ class Subscriptions(APIView):
         if not form.is_valid():
             return error_400(response=form.errors)
 
-        transaction = Transaction(request.session)
-        # Should we re-enter old transactions, remove them from the session on
-        # error or success or just force a new one? For now let's just force
-        # a reset.
-        # https://github.com/mozilla/payments-service/issues/33
-        transaction.reset()
-        transaction.create(request.user, form.cleaned_data['plan_id'])
-
         try:
             self.set_up_customer(request.user)
             pay_method_uri = self.get_pay_method(
@@ -81,10 +72,8 @@ class Subscriptions(APIView):
             })
         except HttpClientError, exc:
             log.debug('caught bad request from solitude: {e}'.format(e=exc))
-            transaction.errored('SETUP_ERROR')
             return error_400(exception=exc)
 
-        transaction.succeeded()
         return Response({}, status=204)
 
     def get_pay_method(self, buyer, pay_method_uri, pay_method_nonce):

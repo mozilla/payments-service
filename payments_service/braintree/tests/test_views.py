@@ -5,8 +5,6 @@ from nose.tools import eq_
 from slumber.exceptions import HttpClientError
 
 from payments_service.base.tests import AuthenticatedTestCase, TestCase
-from payments_service.solitude import constants
-from payments_service.solitude.tests import TransactionTestCase
 
 
 class TestTokenGenerator(AuthenticatedTestCase):
@@ -65,7 +63,7 @@ class TestPayMethod(AuthenticatedTestCase):
         eq_(call_args[1]['active'], '0')
 
 
-class TestSubscribe(TransactionTestCase):
+class TestSubscribe(AuthenticatedTestCase):
     nonce = 'some-braintree-nonce'
     plan_id = 'some-braintree-plan'
 
@@ -166,41 +164,6 @@ class TestSubscribe(TransactionTestCase):
 
         res, data = self.post()
         self.assert_form_error(res, ['nonce'])
-
-    def test_transaction_errored(self):
-        self.setup_generic_buyer()
-        exc = HttpClientError('bad request')
-        exc.content = {'nonce': ['This field is required.']}
-        self.solitude.braintree.paymethod.post.side_effect = exc
-
-        res, data = self.post()
-        self.transaction_mock.patch.assert_called_with({
-            'status': constants.STATUS_ERRORED,
-            'status_reason': 'SETUP_ERROR'})
-
-    def test_transaction_created(self):
-        self.setup_generic_buyer()
-        self.expect_new_pay_method()
-
-        res, data = self.post()
-        eq_(res.status_code, 204, res)
-        self.solitude.generic.transaction.post.assert_called_with({
-            'status': constants.STATUS_STARTED,
-            'seller_product': '/generic/product/456/',
-            'provider': constants.PROVIDER_BRAINTREE,
-            'buyer': '/generic/buyer/1234/',
-            'seller': '/generic/seller/123/',
-            'type': constants.TYPE_PAYMENT
-        })
-
-    def test_transaction_succeeded(self):
-        self.setup_generic_buyer()
-        self.expect_new_pay_method()
-
-        res, data = self.post()
-        eq_(res.status_code, 204, res)
-        self.transaction_mock.patch.assert_called_with({
-            'status': constants.STATUS_COMPLETED})
 
     def test_missing_pay_method(self):
         res, data = self.post({'plan_id': self.plan_id})
