@@ -30,3 +30,17 @@ class TestSignInForm(AuthTest):
         form = self.submit()
         assert 'access_token' in form.errors.as_data(), form.errors
         assert self.fxa_post.called
+
+    def test_missing_email_scope(self):
+        self.set_fxa_response(scope=['payments'])
+        form = self.submit()
+        assert 'access_token' in form.errors.as_data(), form.errors
+        assert self.fxa_post.called
+
+    def test_honor_full_profile_access(self):
+        self.set_fxa_response(scope=['payments', 'profile'])
+        assert self.submit().is_valid()
+
+    def test_form_ok(self):
+        self.set_fxa_response()
+        assert self.submit().is_valid()

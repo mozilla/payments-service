@@ -39,11 +39,22 @@ class SignInForm(forms.Form):
             raise forms.ValidationError('invalid FxA response')
 
         fxa_token = res.json()
+
         if u'payments' not in fxa_token['scope']:
             log.info(u'FxA access token cannot access the "payments" '
                      u'scope; token={token}; scopes={scopes}'
                      .format(token=access_token, scopes=fxa_token['scope']))
-            raise forms.ValidationError('incorrect scope')
+            raise forms.ValidationError(
+                'access token is missing the payments scope')
+
+        has_email_access = any((u'profile' in fxa_token['scope'],
+                                u'profile:email' in fxa_token['scope']))
+        if not has_email_access:
+            log.info(u'FxA access token cannot access the "profile:email" '
+                     u'scope; token={token}; scopes={scopes}'
+                     .format(token=access_token, scopes=fxa_token['scope']))
+            raise forms.ValidationError(
+                'access token is missing the profile:email scope')
 
         log.info(u'FxA token is valid; token={token}; fxa_token={fxa}'
                  .format(token=access_token, fxa=fxa_token))
