@@ -45,6 +45,12 @@ class SignInView(UnprotectedAPIView):
         request.session['buyer_pk'] = buyer['resource_pk']
         request.session['buyer_uuid'] = buyer['uuid']
 
+        # As a convenience, put any saved payment methods in the response
+        # if the user has them.
+        pay_methods = api.braintree.mozilla.paymethod.get(
+            active=True, braintree_buyer__buyer__uuid=buyer['uuid'])
+
         return Response(
-            {'buyer_uuid': buyer['uuid'], 'buyer_pk': buyer['resource_pk']},
+            {'buyer_uuid': buyer['uuid'], 'buyer_pk': buyer['resource_pk'],
+             'payment_methods': pay_methods},
             status=status)
