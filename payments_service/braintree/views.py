@@ -130,7 +130,3 @@ class Webhook(UnprotectedAPIView, SolitudeBodyguard):
             return (renderer, renderer.media_type)
         return (super(self.__class__, self)
                 .perform_content_negotiation(request, **kw))
-
-    def get(self, request, **kw):
-        return super(self.__class__, self).get(
-            request, **dict(request.QUERY_PARAMS.items()))
