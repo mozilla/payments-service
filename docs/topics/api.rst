@@ -199,7 +199,8 @@ with a saved credit card, submit ``pay_method_uri``.
         Solitude URI to an existing `payment method`_ for this buyer.
         When paying with a saved card, post this value instead of a nonce.
     :param string plan_id:
-        Braintree subscription `plan ID`_.
+        Braintree subscription `plan ID`_. If the logged in user is already
+        subscribed to this plan, you'll get an error.
 
     **Response**
 

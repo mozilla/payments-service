@@ -82,6 +82,20 @@ class TestSubscribe(AuthenticatedTestCase):
         }
         return buyer_pk
 
+    def setup_subscription_product(self):
+        self.solitude.generic.product.get_object_or_404.return_value = {
+            'resource_pk': 123
+        }
+
+    def setup_no_subscription_yet(self):
+        self.setup_subscription_product()
+        self.solitude.braintree.mozilla.subscription.get.return_value = []
+
+    def setup_existing_subscription(self):
+        self.setup_subscription_product()
+        # Pretend this returns an existing subscription object.
+        self.solitude.braintree.mozilla.subscription.get.return_value = [{}]
+
     def expect_new_pay_method(self):
         pay_method_uri = '/some/paymethod'
         self.solitude.braintree.paymethod.post.return_value = {
@@ -93,6 +107,7 @@ class TestSubscribe(AuthenticatedTestCase):
 
     def test_with_existing_customer(self):
         buyer_pk = self.setup_generic_buyer()
+        self.setup_no_subscription_yet()
         self.expect_new_pay_method()
 
         res, data = self.post()
@@ -109,6 +124,7 @@ class TestSubscribe(AuthenticatedTestCase):
 
     def test_with_new_customer(self):
         self.setup_generic_buyer()
+        self.setup_no_subscription_yet()
         self.expect_new_pay_method()
 
         # Set up non-existing braintree customer.
@@ -122,6 +138,7 @@ class TestSubscribe(AuthenticatedTestCase):
 
     def test_with_new_pay_method(self):
         self.setup_generic_buyer()
+        self.setup_no_subscription_yet()
         pay_method_uri = self.expect_new_pay_method()
 
         res, data = self.post()
@@ -134,6 +151,7 @@ class TestSubscribe(AuthenticatedTestCase):
 
     def test_with_existing_pay_method(self):
         self.setup_generic_buyer()
+        self.setup_no_subscription_yet()
         pay_method_uri = '/my/saved/paymethod'
 
         res, data = self.post(data={'pay_method_uri': pay_method_uri,
@@ -147,6 +165,7 @@ class TestSubscribe(AuthenticatedTestCase):
 
     def test_too_many_pay_methods(self):
         self.setup_generic_buyer()
+        self.setup_no_subscription_yet()
         pay_method_uri = '/my/saved/paymethod'
 
         res, data = self.post(data={
@@ -158,6 +177,7 @@ class TestSubscribe(AuthenticatedTestCase):
 
     def test_bad_solitude_request(self):
         self.setup_generic_buyer()
+        self.setup_no_subscription_yet()
         exc = HttpClientError('bad request')
         exc.content = {'nonce': ['This field is required.']}
         self.solitude.braintree.paymethod.post.side_effect = exc
@@ -166,8 +186,26 @@ class TestSubscribe(AuthenticatedTestCase):
         self.assert_form_error(res, ['nonce'])
 
     def test_missing_pay_method(self):
+        self.setup_no_subscription_yet()
         res, data = self.post({'plan_id': self.plan_id})
         self.assert_form_error(res, ['__all__'])
+
+    def test_user_already_subscribed(self):
+        self.setup_generic_buyer()
+        self.setup_existing_subscription()
+
+        res, data = self.post()
+        self.assert_form_error(res, ['__all__'])
+        assert self.solitude.braintree.mozilla.subscription.get.called
+
+    def test_can_do_repeat_payments_with_setting(self):
+        self.setup_generic_buyer()
+        self.setup_existing_subscription()
+        self.expect_new_pay_method()
+
+        with self.settings(ALLOW_REPEAT_PAYMENTS=True):
+            res, data = self.post()
+        eq_(res.status_code, 204, res)
 
 
 class TestWebhook(TestCase):

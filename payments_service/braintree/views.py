@@ -1,5 +1,6 @@
 import logging
 
+from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist
 
 from rest_framework.views import APIView
@@ -58,6 +59,27 @@ class Subscriptions(APIView):
         form = SubscriptionForm(request.DATA)
         if not form.is_valid():
             return error_400(response=form.errors)
+
+        if settings.ALLOW_REPEAT_PAYMENTS:
+            log.warn('not protecting against repeat subscriptions')
+        else:
+            # TODO: remove this after
+            # https://github.com/mozilla/solitude/issues/466
+            product = self.api.generic.product.get_object_or_404(
+                public_id=form.cleaned_data['plan_id'],
+            )
+            # Check if the user is already subscribed to this plan.
+            result = self.api.braintree.mozilla.subscription.get(
+                paymethod__braintree_buyer__buyer=self.request.user.pk,
+                seller_product=product['resource_pk'],
+            )
+            if len(result):
+                log.info(
+                    'buyer {buyer} is already subscribed to product {product}'
+                    .format(buyer=self.request.user.pk,
+                            product=product['resource_pk']))
+                return error_400(
+                    response='user is already subscribed to this product')
 
         try:
             self.set_up_customer(request.user)
