@@ -174,12 +174,19 @@ class TestWebhook(TestCase):
 
     def test_verify(self):
         self.solitude.braintree.webhook.get.return_value = 'token'
-        res = self.client.get(reverse('braintree:webhook'))
+        res = self.client.get(reverse('braintree:webhook') + '?bt_challenge=f')
+        self.solitude.braintree.webhook.get.assert_called_with(
+            bt_challenge='f')
         eq_(res['Content-Type'], 'text/plain; charset=utf-8')
         eq_(res.status_code, 200)
         eq_(res.content, 'token')
 
     def test_parse(self):
         self.solitude.braintree.webhook.post.return_value = ''
-        res = self.client.post(reverse('braintree:webhook'))
+        res = self.client.post(
+            reverse('braintree:webhook'),
+            {'bt_payload': 'p', 'bt_signature': 's'}
+        )
+        self.solitude.braintree.webhook.post.assert_called_with(
+            {'bt_payload': ['p'], 'bt_signature': ['s']})
         eq_(res.status_code, 200)
