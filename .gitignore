@@ -9,3 +9,4 @@ supervisord.pid
 *~
 *.mo
 *.db
+payments_service/settings/local.py

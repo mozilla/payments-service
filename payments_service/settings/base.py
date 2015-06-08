@@ -198,3 +198,8 @@ SOLITUDE_SECRET = 'please change this'
 # Firefox Accounts OAuth server to use.
 # https://github.com/mozilla/fxa-oauth-server/
 FXA_OAUTH_URL = 'https://oauth-stable.dev.lcip.org'
+
+# When True we won't complain if a user tries to buy the same thing twice.
+# This might be useful to enable during development if you want to keep
+# firing off payments in the sandbox.
+ALLOW_REPEAT_PAYMENTS = False
