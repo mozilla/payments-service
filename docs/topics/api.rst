@@ -98,12 +98,17 @@ Sign-In
 
     :>json string buyer_uuid: `Solitude buyer`_ uuid identifier
     :>json string buyer_pk: `Solitude buyer`_ pk identifier
+    :>json array payment_methods:
+        A list of the user's pre-saved `Solitude payment method`_ objects.
+        If the user hasn't saved any payment methods yet, this will be an
+        empty list.
 
     :status 200: returning buyer authenticated successfully.
     :status 201: first time buyer authenticated successfully.
 
 .. _`access token`: https://github.com/mozilla/fxa-oauth-server/blob/master/docs/api.md#post-v1token
 .. _`Solitude buyer`: https://solitude.readthedocs.org/en/latest/topics/generic.html#buyers
+.. _`Solitude payment method`: https://solitude.readthedocs.org/en/latest/topics/braintree.html#get--braintree-mozilla-paymethod--method%20id--
 
 Braintree
 =========
