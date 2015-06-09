@@ -198,15 +198,6 @@ class TestSubscribe(AuthenticatedTestCase):
         self.assert_form_error(res, ['__all__'])
         assert self.solitude.braintree.mozilla.subscription.get.called
 
-    def test_can_do_repeat_payments_with_setting(self):
-        self.setup_generic_buyer()
-        self.setup_existing_subscription()
-        self.expect_new_pay_method()
-
-        with self.settings(ALLOW_REPEAT_PAYMENTS=True):
-            res, data = self.post()
-        eq_(res.status_code, 204, res)
-
 
 class TestWebhook(TestCase):
 
