@@ -74,6 +74,11 @@ class TestSignInView(SignInTest):
         res, data = self.post()
         self.assert_form_error(res)
 
+    def test_expose_csrf_token(self):
+        self.set_solitude_buyer()
+        res, data = self.post()
+        assert 'csrf_token' in data, 'Unexpected: {}'.format(data)
+
 
 class TestPayMethodsOnSignIn(SignInTest):
 

@@ -1,3 +1,6 @@
+from django.http import HttpRequest, HttpResponse
+from django.middleware import csrf
+
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from mock import Mock
@@ -34,14 +37,29 @@ class DefaultView(APIView):
     A view that inherits default DRF permissions.
     """
     def get(self, request):
-        return Response('some response')
+        return Response('some get response')
+
+    def post(self, request):
+        return Response('some post response')
 
 
 class TestDefaultViewProtection(TestCase, WithDynamicEndpoints):
 
-    def get(self):
+    def request(self, method, *args, **kw):
         self.endpoint(DefaultView)
-        return self.json(self.client.get('/dynamic-endpoint'))
+        return self.json(
+            getattr(self.client, method)('/dynamic-endpoint', *args, **kw)
+        )
+
+    def get(self, *args, **kw):
+        return self.request('get', *args, **kw)
+
+    def post(self, *args, **kw):
+        return self.request('post', *args, **kw)
+
+    def login(self, **extra_session):
+        self.prepare_session(buyer_uuid='some-uuid', buyer_pk=1,
+                             **extra_session)
 
     def test_view_access_denied(self):
         res, data = self.get()
@@ -50,6 +68,34 @@ class TestDefaultViewProtection(TestCase, WithDynamicEndpoints):
             'You do not have permission to perform this action.')
 
     def test_view_access_granted(self):
-        self.prepare_session(buyer_uuid='some-uuid', buyer_pk=1)
+        self.login()
         res, data = self.get()
+        eq_(res.status_code, 200, res)
+
+    def test_view_requires_csrf_token(self):
+        self.login()
+        self.client.handler.enforce_csrf_checks = True
+        res, data = self.post({})
+        eq_(res.status_code, 403, res)
+
+    def test_can_access_view_with_csrf_token(self):
+        self.login()
+        self.client.handler.enforce_csrf_checks = True
+
+        # Simulate CSRF middleware processing within Django.
+        fake_request = HttpRequest()
+        fake_response = HttpResponse()
+        middleware = csrf.CsrfViewMiddleware()
+        # Generate a CSRF token.
+        middleware.process_view(fake_request, lambda: None, [], {})
+        # Simulate exposing a CSRF token on a web form. This has a
+        # side effect of preparing the middleware for response processing
+        # since CSRF processing is enabled lazily.
+        csrf_token = csrf.get_token(fake_request)
+        # Set a CSRF cookie.
+        middleware.process_response(fake_request, fake_response)
+        # Prepare to send the cookie in our test client's request.
+        self.client.cookies.update(fake_response.cookies)
+
+        res, data = self.post({}, HTTP_X_CSRFTOKEN=csrf_token)
         eq_(res.status_code, 200, res)
