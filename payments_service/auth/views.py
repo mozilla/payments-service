@@ -1,6 +1,7 @@
 import logging
 
 from django.core.exceptions import ObjectDoesNotExist
+from django.middleware import csrf
 
 from rest_framework.response import Response
 from slumber.exceptions import HttpClientError
@@ -50,7 +51,12 @@ class SignInView(UnprotectedAPIView):
         pay_methods = api.braintree.mozilla.paymethod.get(
             active=True, braintree_buyer__buyer__uuid=buyer['uuid'])
 
-        return Response(
-            {'buyer_uuid': buyer['uuid'], 'buyer_pk': buyer['resource_pk'],
-             'payment_methods': pay_methods},
-            status=status)
+        # Generate a new token for added security.
+        csrf.rotate_token(request)
+
+        return Response({
+            'buyer_uuid': buyer['uuid'],
+            'buyer_pk': buyer['resource_pk'],
+            'payment_methods': pay_methods,
+            'csrf_token': csrf.get_token(request),
+        }, status=status)

@@ -39,7 +39,9 @@ will give you some additional details.
         object with more information. This might be empty.
 
     :status 400: problem with the request
-    :status 403: user not authenticated
+    :status 403:
+        * user not authenticated
+        * CSRF token (from `sign-in`_) is missing or invalid
     :status 404: endpoint doesn't exist
     :status 405: endpoint doesn't support this method
     :status 500: unexpected error
@@ -83,6 +85,8 @@ User Auth
 
 These endpoints deal with user authentication and authorization.
 
+.. sign-in:
+
 Sign-In
 ~~~~~~~
 
@@ -102,6 +106,9 @@ Sign-In
         A list of the user's pre-saved `Solitude payment method`_ objects.
         If the user hasn't saved any payment methods yet, this will be an
         empty list.
+    :>json string csrf_token: `Django CSRF`_ token string to protect against
+        cross site request forgery. You must include this in all subsequent
+        requests using the ``X-CSRFToken`` request header.
 
     :status 200: returning buyer authenticated successfully.
     :status 201: first time buyer authenticated successfully.
@@ -109,6 +116,7 @@ Sign-In
 .. _`access token`: https://github.com/mozilla/fxa-oauth-server/blob/master/docs/api.md#post-v1token
 .. _`Solitude buyer`: https://solitude.readthedocs.org/en/latest/topics/generic.html#buyers
 .. _`Solitude payment method`: https://solitude.readthedocs.org/en/latest/topics/braintree.html#get--braintree-mozilla-paymethod--method%20id--
+.. _`Django CSRF`: https://docs.djangoproject.com/en/1.8/ref/csrf/
 
 Braintree
 =========

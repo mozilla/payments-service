@@ -32,7 +32,7 @@ class SolitudeBuyer(AnonymousUser):
         return True
 
 
-class SessionUserAuthentication(authentication.BaseAuthentication):
+class SessionUserAuthentication(authentication.SessionAuthentication):
     """
     Ensures that a user has been session-authenticated before running the
     protected view.
@@ -48,5 +48,7 @@ class SessionUserAuthentication(authentication.BaseAuthentication):
             log.debug('auth success: buyer_uuid in session')
             user = SolitudeBuyer(request.session['buyer_uuid'],
                                  request.session['buyer_pk'])
+
+        self.enforce_csrf(request)
 
         return (user, None)
