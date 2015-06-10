@@ -12,6 +12,7 @@ class AuthTest(TestCase):
         self.addCleanup(p.stop)
         self.access_token = 'some-oauth-token'
         self.fxa_user_id = '54321abcde'
+        self.fxa_email = 'some-user@somewhere.com'
 
     def set_fxa_response(self, scope=None):
         if scope is None:
@@ -20,7 +21,7 @@ class AuthTest(TestCase):
         mock_response.json.return_value = {
             'user': self.fxa_user_id,
             'client_id': '12345ab',
-            'email': 'some-user@somewhere.com',
+            'email': self.fxa_email,
             'scope': scope,
         }
         self.fxa_post.return_value = mock_response
