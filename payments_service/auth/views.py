@@ -69,6 +69,7 @@ class SignInView(UnprotectedAPIView):
         return Response({
             'buyer_uuid': buyer['uuid'],
             'buyer_pk': buyer['resource_pk'],
+            'buyer_email': email,
             'payment_methods': pay_methods,
             'csrf_token': csrf.get_token(request),
         }, status=201 if created else 200)

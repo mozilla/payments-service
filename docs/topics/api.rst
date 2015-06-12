@@ -95,13 +95,15 @@ Sign-In
     **Request**
 
     :param string access_token:
-        Firefox Accounts OAuth `access token`_. This would typically be
+        `Firefox Accounts`_ OAuth `access token`_. This would typically be
         generated from an initial sign-in flow triggered by the app that
         wishes to sell a product. The token must be scoped for **payments**
         otherwise you will receive an error response.
 
     :>json string buyer_uuid: `Solitude buyer`_ uuid identifier
     :>json string buyer_pk: `Solitude buyer`_ pk identifier
+    :>json string buyer_email:
+        `Firefox Accounts`_ email address that the buyer signed in with
     :>json array payment_methods:
         A list of the user's pre-saved `Solitude payment method`_ objects.
         If the user hasn't saved any payment methods yet, this will be an
@@ -117,6 +119,7 @@ Sign-In
 .. _`Solitude buyer`: https://solitude.readthedocs.org/en/latest/topics/generic.html#buyers
 .. _`Solitude payment method`: https://solitude.readthedocs.org/en/latest/topics/braintree.html#get--braintree-mozilla-paymethod--method%20id--
 .. _`Django CSRF`: https://docs.djangoproject.com/en/1.8/ref/csrf/
+.. _`Firefox Accounts`: https://wiki.mozilla.org/Identity/Firefox_Accounts
 
 Braintree
 =========
