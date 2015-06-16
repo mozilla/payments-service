@@ -90,6 +90,9 @@ DATABASES = {
     }
 }
 
+# Only write emails to the console during development.
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+
 
 # Internationalization
 # https://docs.djangoproject.com/en/1.8/topics/i18n/
@@ -199,3 +202,12 @@ SOLITUDE_SECRET = 'please change this'
 # Firefox Accounts OAuth server to use.
 # https://github.com/mozilla/fxa-oauth-server/
 FXA_OAUTH_URL = 'https://oauth-stable.dev.lcip.org'
+
+# When emailing buyers about their subscriptions, this
+# will be the reply-to address. If a buyer replies to
+# the email it will go to this address.
+SUBSCRIPTION_REPLY_TO_EMAIL = 'payments-support@mozilla.com'
+
+# When emailing buyers about their subscriptions, this
+# will be the sender address. Bounces will be sent here.
+SUBSCRIPTION_FROM_EMAIL = 'no-reply@mozilla.com'

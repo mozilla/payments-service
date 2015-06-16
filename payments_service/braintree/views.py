@@ -1,7 +1,13 @@
 import logging
 
+from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist
+from django.core.mail import EmailMultiAlternatives, get_connection
+from django.template import Context
+from django.template.loader import get_template
 
+from dateutil.parser import parse as parse_date
+from payments_config import products, sellers
 from rest_framework.views import APIView
 from rest_framework.renderers import BaseRenderer
 from rest_framework.response import Response
@@ -129,22 +135,113 @@ class PlainTextRenderer(BaseRenderer):
         return data.encode(self.charset)
 
 
-class Webhook(UnprotectedAPIView, SolitudeBodyguard):
-    methods = ['post', 'get']
-    resource = 'braintree.webhook'
+class Webhook(UnprotectedAPIView):
+    renderer_classes = [PlainTextRenderer]
 
-    def perform_content_negotiation(self, request, **kw):
-        """
-        Braintree sends a request that has an Accept Header of
-        u'*/*; q=0.5', u'application/xml', but we need to force
-        DRF to return it as text/plain. The only way we can do that
-        is to override the content negotiation and insert our rather
-        boring plain text renderer.
+    def __init__(self, *args, **kw):
+        super(Webhook, self).__init__(*args, **kw)
+        self.api = solitude.api()
 
-        See https://github.com/braintree/braintree_python/issues/54
-        """
-        if request.method.lower() == 'get':
-            renderer = PlainTextRenderer()
-            return (renderer, renderer.media_type)
-        return (super(self.__class__, self)
-                .perform_content_negotiation(request, **kw))
+    def get(self, request):
+        try:
+            result = self.api.braintree.webhook.get(
+                bt_challenge=request.REQUEST.get('bt_challenge'))
+            status = 200
+        except HttpClientError, exc:
+            log.info('webhook GET: ignoring bad request: '
+                     '{e.__class__.__name__}: {e}'.format(e=exc))
+            result = 'verification failed'
+            status = 400
+        return Response(result, status=status,
+                        content_type='text/plain; charset=utf-8')
+
+    def post(self, request):
+        try:
+            webhook_result = self.api.braintree.webhook.post({
+                'bt_payload': request.DATA.get('bt_payload'),
+                'bt_signature': request.DATA.get('bt_signature'),
+            })
+            if webhook_result:
+                self.notify_buyer(webhook_result)
+            else:
+                # Solitude is configurred to return a 204 when we do
+                # not need to act on the webhook.
+                log.warning('not notifying buyer of webhook result; '
+                            'received empty response (204)')
+            result = ''
+            # Even though this is an empty response,
+            # Braintree expects it to be a 200.
+            status = 200
+        except HttpClientError, exc:
+            log.info('webhook POST: ignoring bad request: '
+                     '{e.__class__.__name__}: {e}'.format(e=exc))
+            result = 'verification failed'
+            status = 400
+
+        return Response(result, status=status)
+
+    def notify_buyer(self, result):
+        log.debug('about to handle webhook: {s}'
+                  .format(s=result))
+        log.info('notifying buyer {b} about webhook of kind: {k}'
+                 .format(b=result['mozilla']['buyer'],
+                         k=result['braintree']['kind']))
+
+        # TODO: get the real product.
+        # https://github.com/mozilla/solitude/issues/481
+        product = products['mozilla-concrete-brick']
+
+        # TODO: use a real lookup in the config
+        # https://github.com/mozilla/payments-config/issues/8
+        sellers_by_product = {}
+        for seller_id, seller in sellers.items():
+            for p in seller.products:
+                sellers_by_product[p.id] = seller
+
+        bt_trans = result['mozilla']['transaction']['braintree']
+        moz_trans = result['mozilla']['transaction']['generic']
+
+        # TODO: get the actual seller name, not the ID.
+        # https://github.com/mozilla/payments-config/issues/7
+        # TODO: I think we need to get the actual price of the transaction here
+        # (localized).
+        # TODO: This assumes monthly subscriptions but we should figure that
+        # out automatically.
+        # TODO: link to terms and conditions for the payment.
+        # TODO: maybe localize the email?
+        # This will default to English.
+
+        tpl = get_template('braintree/subscription_receipt.txt')
+        text_body = tpl.render(Context(dict(
+            product=product,
+            seller=sellers_by_product[product.id],
+            result=result,
+            date=parse_date(moz_trans['created']).strftime('%d %b %Y'),
+            transaction=moz_trans,
+            # TODO: map type IDs to credit card names.
+            # https://github.com/mozilla/payments-config/issues/6
+            cc_type=result['mozilla']['paymethod']['type'],
+            cc_truncated_id=result['mozilla']['paymethod']['truncated_id'],
+            bill_start=parse_date(
+                bt_trans['billing_period_start_date']).strftime('%d %b %Y'),
+            bill_end=parse_date(
+                bt_trans['billing_period_end_date']).strftime('%d %b %Y'),
+            next_pay_date=parse_date(
+                bt_trans['next_billing_date']).strftime('%d %b %Y'),
+        )))
+
+        connection = get_connection(fail_silently=False)
+        mail = EmailMultiAlternatives(
+            "You're subscribed to {prod.description}".format(prod=product),
+            text_body,
+            settings.SUBSCRIPTION_FROM_EMAIL,
+            [result['mozilla']['buyer']['email']],
+            reply_to=[settings.SUBSCRIPTION_REPLY_TO_EMAIL],
+            connection=connection)
+
+        # TODO: send an HTML email.
+        # https://github.com/mozilla/payments-service/issues/59
+        #
+        # mail.attach_alternative(html_message, 'text/html')
+
+        mail.send()
