@@ -208,6 +208,7 @@ class Webhook(UnprotectedAPIView):
         # TODO: This assumes monthly subscriptions but we should figure that
         # out automatically.
         # TODO: link to terms and conditions for the payment.
+        # https://github.com/mozilla/payments/issues/78
         # TODO: maybe localize the email?
         # This will default to English.
 
