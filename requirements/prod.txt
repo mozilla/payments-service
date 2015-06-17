@@ -38,6 +38,12 @@ oauthlib==0.7.2
 # sha256: tTHG7k3bZ2ptsZ6BS9FwT5KJ5Wwfro7UF9brdg5SuCY
 oauth2==1.5.211
 
+# sha256: HTRalVi8okz3m__MzsAL08-u8yBHeXjgn7tWKJAriTU
+payments-config==0.0.6
+
+# sha256: aFwGTOdTFr29NSNqh8a_kNNJvdW6ReHLWaaHs6A1DcY
+python-dateutil==1.5
+
 # sha256: CjoiZeHvsN76ci0fQpcw3J35da3DxgrH0rQyvfA8BB0
 Pygments==2.0.2
 

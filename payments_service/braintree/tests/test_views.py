@@ -1,3 +1,7 @@
+import urllib
+
+from django.conf import settings
+from django.core import mail
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.urlresolvers import reverse
 
@@ -201,21 +205,128 @@ class TestSubscribe(AuthenticatedTestCase):
 
 class TestWebhook(TestCase):
 
+    def get(self, **params):
+        params.setdefault('bt_challenge', 'challenge-code')
+        url = '{url}?{q}'.format(url=reverse('braintree:webhook'),
+                                 q=urllib.urlencode(params))
+        return self.client.get(url)
+
+    def post(self, data=None):
+        if not data:
+            data = {'bt_payload': 'p', 'bt_signature': 's'}
+        return self.client.post(reverse('braintree:webhook'), data)
+
+    def subscription_notice(self):
+        return {
+            "mozilla": {
+                "buyer": {
+                    "email": "email@example.com",
+                    "resource_pk": 1,
+                    "resource_uri": "/generic/buyer/1/",
+                    "uuid": "d5074761-eb08-4bd2-a08e-85b21f9df407"
+                },
+                "paymethod": {
+                    "resource_pk": 1,
+                    "resource_uri": "/braintree/mozilla/paymethod/1/",
+                    "braintree_buyer": "/braintree/mozilla/buyer/1/",
+                    "id": 1,
+                    "provider_id": "269f061d-d48c-48a9-8e4c-55a4acb3ea08",
+                    "type": 1,
+                    "type_name": "",
+                    "truncated_id": "1234"
+                },
+                "transaction": {
+                    "generic": {
+                        "amount": "10",
+                        "buyer": "/generic/buyer/1/",
+                        "currency": "USD",
+                        "provider": 4,
+                        "resource_pk": 1,
+                        "resource_uri": "/generic/transaction/1/",
+                        "seller": "/generic/seller/1/",
+                        "seller_product": "/generic/product/1/",
+                        "status": 2,
+                        "status_reason": "settled",
+                        "type": 0,
+                        "created": "2015-06-11T13:20:14.600",
+                        "uid_pay": None,
+                        "uid_support": "bt:id",
+                        "uuid": "553e6540-5bf7-4e23-880e-b656f268a10e"
+                    },
+                    "braintree": {
+                        "resource_pk": 1,
+                        "resource_uri": "/generic/transaction/1/",
+                        "paymethod": "/braintree/mozilla/paymethod/1/",
+                        "subscription": "/braintree/mozilla/subscription/1/",
+                        "transaction": "/generic/transaction/1/",
+                        "id": 1,
+                        "billing_period_end_date": "2015-07-10T13:20:14.591",
+                        "billing_period_start_date": "2015-06-11T13:20:14.591",
+                        "kind": "subscription_charged_successfully",
+                        "next_billing_date": "2015-07-11T13:20:14.591",
+                        "next_billing_period_amount": "10"
+                    }
+                },
+                "subscription": {
+                    "resource_pk": 1,
+                    "resource_uri": "/braintree/mozilla/subscription/1/",
+                    "paymethod": "/braintree/mozilla/paymethod/1/",
+                    "seller_product": "/generic/product/1/",
+                    "id": 1,
+                    "provider_id": "some-bt:id"
+                }
+            },
+            "braintree": {
+                "kind": "subscription_charged_successfully"
+            }
+        }
+
     def test_verify(self):
         self.solitude.braintree.webhook.get.return_value = 'token'
-        res = self.client.get(reverse('braintree:webhook') + '?bt_challenge=f')
+        res = self.get(bt_challenge='f')
         self.solitude.braintree.webhook.get.assert_called_with(
             bt_challenge='f')
         eq_(res['Content-Type'], 'text/plain; charset=utf-8')
         eq_(res.status_code, 200)
         eq_(res.content, 'token')
 
+    def test_verify_failed(self):
+        self.solitude.braintree.webhook.get.side_effect = HttpClientError
+        res = self.get()
+        eq_(res.status_code, 400)
+
     def test_parse(self):
-        self.solitude.braintree.webhook.post.return_value = ''
-        res = self.client.post(
-            reverse('braintree:webhook'),
-            {'bt_payload': 'p', 'bt_signature': 's'}
-        )
-        self.solitude.braintree.webhook.post.assert_called_with(
-            {'bt_payload': ['p'], 'bt_signature': ['s']})
+        post = self.solitude.braintree.webhook.post
+        post.return_value = self.subscription_notice()
+
+        data = {'bt_payload': 'p', 'bt_signature': 's'}
+        res = self.post(data=data)
+
+        self.solitude.braintree.webhook.post.assert_called_with(data)
         eq_(res.status_code, 200)
+
+    def test_parse_failed(self):
+        self.solitude.braintree.webhook.post.side_effect = HttpClientError
+        res = self.post()
+        eq_(res.status_code, 400)
+
+    def test_parse_and_send_email(self):
+        notice = self.subscription_notice()
+        self.solitude.braintree.webhook.post.return_value = notice
+        self.post()
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertEqual(mail.outbox[0].subject,
+                         "You're subscribed to Brick")
+        self.assertEqual(mail.outbox[0].to,
+                         [notice['mozilla']['buyer']['email']])
+        self.assertEqual(mail.outbox[0].from_email,
+                         settings.SUBSCRIPTION_FROM_EMAIL)
+        self.assertEqual(mail.outbox[0].reply_to,
+                         [settings.SUBSCRIPTION_REPLY_TO_EMAIL])
+        assert 'Brick' in mail.outbox[0].body
+
+    def test_ignore_inactionable_webhook(self):
+        # Solitude returns a 204 when we do not need to act on the webhook.
+        self.solitude.braintree.webhook.post.return_value = ''
+        self.post()
+        self.assertEqual(len(mail.outbox), 0)
