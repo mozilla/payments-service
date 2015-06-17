@@ -237,7 +237,7 @@ class TestWebhook(TestCase):
                 },
                 "transaction": {
                     "generic": {
-                        "amount": "10",
+                        "amount": "10.00",
                         "buyer": "/generic/buyer/1/",
                         "currency": "USD",
                         "provider": 4,
@@ -323,7 +323,9 @@ class TestWebhook(TestCase):
                          settings.SUBSCRIPTION_FROM_EMAIL)
         self.assertEqual(mail.outbox[0].reply_to,
                          [settings.SUBSCRIPTION_REPLY_TO_EMAIL])
-        assert 'Brick' in mail.outbox[0].body
+        msg = mail.outbox[0].body
+        assert 'Brick' in msg, 'Unexpected: {}'.format(msg)
+        assert '$10.00' in msg, 'Unexpected: {}'.format(msg)
 
     def test_ignore_inactionable_webhook(self):
         # Solitude returns a 204 when we do not need to act on the webhook.
