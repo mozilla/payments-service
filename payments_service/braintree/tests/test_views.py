@@ -324,8 +324,9 @@ class TestWebhook(TestCase):
         self.assertEqual(mail.outbox[0].reply_to,
                          [settings.SUBSCRIPTION_REPLY_TO_EMAIL])
         msg = mail.outbox[0].body
-        assert 'Brick' in msg, 'Unexpected: {}'.format(msg)
-        assert '$10.00' in msg, 'Unexpected: {}'.format(msg)
+        assert 'Mozilla Concrete' in msg, 'Unexpected: {}'.format(msg)
+        assert 'Product       Brick' in msg, 'Unexpected: {}'.format(msg)
+        assert 'Amount        $10.00' in msg, 'Unexpected: {}'.format(msg)
         assert 'Visa ending in 1234' in msg, 'Unexpected: {}'.format(msg)
 
     def test_ignore_inactionable_webhook(self):
