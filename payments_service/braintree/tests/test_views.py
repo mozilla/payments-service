@@ -232,7 +232,7 @@ class TestWebhook(TestCase):
                     "id": 1,
                     "provider_id": "269f061d-d48c-48a9-8e4c-55a4acb3ea08",
                     "type": 1,
-                    "type_name": "",
+                    "type_name": "Visa",
                     "truncated_id": "1234"
                 },
                 "transaction": {
@@ -326,6 +326,7 @@ class TestWebhook(TestCase):
         msg = mail.outbox[0].body
         assert 'Brick' in msg, 'Unexpected: {}'.format(msg)
         assert '$10.00' in msg, 'Unexpected: {}'.format(msg)
+        assert 'Visa ending in 1234' in msg, 'Unexpected: {}'.format(msg)
 
     def test_ignore_inactionable_webhook(self):
         # Solitude returns a 204 when we do not need to act on the webhook.

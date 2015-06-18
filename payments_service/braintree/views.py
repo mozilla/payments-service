@@ -216,9 +216,7 @@ class Webhook(UnprotectedAPIView):
             result=result,
             date=parse_date(moz_trans['created']).strftime('%d %b %Y'),
             transaction=moz_trans,
-            # TODO: map type IDs to credit card names.
-            # https://github.com/mozilla/payments-config/issues/6
-            cc_type=result['mozilla']['paymethod']['type'],
+            cc_type=result['mozilla']['paymethod']['type_name'],
             cc_truncated_id=result['mozilla']['paymethod']['truncated_id'],
             bill_start=parse_date(
                 bt_trans['billing_period_start_date']).strftime('%d %b %Y'),
