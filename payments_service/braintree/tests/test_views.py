@@ -216,7 +216,7 @@ class TestWebhook(TestCase):
             data = {'bt_payload': 'p', 'bt_signature': 's'}
         return self.client.post(reverse('braintree:webhook'), data)
 
-    def subscription_notice(self):
+    def subscription_notice(self, kind='subscription_charged_successfully'):
         return {
             "mozilla": {
                 "buyer": {
@@ -284,7 +284,7 @@ class TestWebhook(TestCase):
                 },
             },
             "braintree": {
-                "kind": "subscription_charged_successfully"
+                "kind": kind
             }
         }
 
@@ -297,7 +297,7 @@ class TestWebhook(TestCase):
         eq_(res.status_code, 200)
         eq_(res.content, 'token')
 
-    def test_verify_failed(self):
+    def test_bas_solitude_response_for_verify(self):
         self.solitude.braintree.webhook.get.side_effect = HttpClientError
         res = self.get()
         eq_(res.status_code, 400)
@@ -312,12 +312,12 @@ class TestWebhook(TestCase):
         self.solitude.braintree.webhook.post.assert_called_with(data)
         eq_(res.status_code, 200)
 
-    def test_parse_failed(self):
+    def test_bad_solitude_response_for_parse(self):
         self.solitude.braintree.webhook.post.side_effect = HttpClientError
         res = self.post()
         eq_(res.status_code, 400)
 
-    def test_parse_and_send_email(self):
+    def test_send_email_for_subscription_charge(self):
         notice = self.subscription_notice()
         self.solitude.braintree.webhook.post.return_value = notice
         self.post()
@@ -330,11 +330,41 @@ class TestWebhook(TestCase):
                          settings.SUBSCRIPTION_FROM_EMAIL)
         self.assertEqual(mail.outbox[0].reply_to,
                          [settings.SUBSCRIPTION_REPLY_TO_EMAIL])
+
         msg = mail.outbox[0].body
         assert 'Mozilla Concrete' in msg, 'Unexpected: {}'.format(msg)
+        text = 'Receipt #     {}'.format(
+            notice['mozilla']['transaction']['generic']['uuid']
+        )
+        assert text in msg, 'Unexpected: {}'.format(msg)
         assert 'Product       Brick' in msg, 'Unexpected: {}'.format(msg)
         assert 'Amount        $10.00' in msg, 'Unexpected: {}'.format(msg)
         assert 'Visa ending in 1234' in msg, 'Unexpected: {}'.format(msg)
+        assert 'Period        11 Jun 2015 - 10 Jul 2015' in msg, (
+            'Unexpected: {}'.format(msg)
+        )
+        assert 'TOTAL: $10.00' in msg, 'Unexpected: {}'.format(msg)
+        assert 'Next payment: 11 Jul 2015' in msg, 'Unexpected: {}'.format(msg)
+
+    def test_send_email_for_subscription_charge_failure(self):
+        notice = self.subscription_notice(
+            kind='subscription_charged_unsuccessfully'
+        )
+        self.solitude.braintree.webhook.post.return_value = notice
+        self.post()
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertEqual(mail.outbox[0].subject,
+                         'Brick: subscription charge failed')
+
+        msg = mail.outbox[0].body
+        assert 'Mozilla Concrete' in msg, 'Unexpected: {}'.format(msg)
+        assert 'Visa ending in 1234' in msg, 'Unexpected: {}'.format(msg)
+        assert 'Product       Brick' in msg, 'Unexpected: {}'.format(msg)
+        assert 'Amount        $10.00' in msg, 'Unexpected: {}'.format(msg)
+        assert 'Period        11 Jun 2015 - 10 Jul 2015' in msg, (
+            'Unexpected: {}'.format(msg)
+        )
+        assert 'TOTAL: $10.00' in msg, 'Unexpected: {}'.format(msg)
 
     def test_ignore_inactionable_webhook(self):
         # Solitude returns a 204 when we do not need to act on the webhook.
