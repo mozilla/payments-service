@@ -274,7 +274,14 @@ class TestWebhook(TestCase):
                     "seller_product": "/generic/product/1/",
                     "id": 1,
                     "provider_id": "some-bt:id"
-                }
+                },
+                "product": {
+                    "seller": "/generic/seller/19/",
+                    "resource_uri": "/generic/product/18/",
+                    "resource_pk": 18,
+                    "public_id": "mozilla-concrete-brick",
+                    "external_id": "mozilla-concrete-brick"
+                },
             },
             "braintree": {
                 "kind": "subscription_charged_successfully"
