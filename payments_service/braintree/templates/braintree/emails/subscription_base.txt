@@ -1,0 +1,14 @@
+{{ seller.name }}
+{{ seller.url }}
+
+Date          {{ date }}
+{% spaceless %}
+{% block info %}
+{% endblock %}
+{% endspaceless %}
+
+TOTAL: {{ product.price.en }}
+{% spaceless %}
+{% block footer %}
+{% endblock %}
+{% endspaceless %}

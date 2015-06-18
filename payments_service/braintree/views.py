@@ -183,9 +183,11 @@ class Webhook(UnprotectedAPIView):
     def notify_buyer(self, result):
         log.debug('about to handle webhook: {s}'
                   .format(s=result))
+
+        notice_kind = result['braintree']['kind']
         log.info('notifying buyer {b} about webhook of kind: {k}'
                  .format(b=result['mozilla']['buyer'],
-                         k=result['braintree']['kind']))
+                         k=notice_kind))
 
         product = products[result['mozilla']['product']['public_id']]
 
@@ -206,7 +208,21 @@ class Webhook(UnprotectedAPIView):
         # TODO: maybe localize the email?
         # This will default to English.
 
-        tpl = get_template('braintree/subscription_receipt.txt')
+        if notice_kind == 'subscription_charged_successfully':
+            subject = "You're subscribed to {prod.description}".format(
+                prod=product,
+            )
+        elif notice_kind == 'subscription_charged_unsuccessfully':
+            subject = '{prod.description}: subscription charge failed'.format(
+                prod=product,
+            )
+        else:
+            raise ValueError(
+                'No email configured for webhook notice: {}'
+                .format(notice_kind)
+            )
+
+        tpl = get_template('braintree/emails/{}.txt'.format(notice_kind))
         text_body = tpl.render(Context(dict(
             moz_trans=moz_trans,
             product=product,
@@ -226,7 +242,7 @@ class Webhook(UnprotectedAPIView):
 
         connection = get_connection(fail_silently=False)
         mail = EmailMultiAlternatives(
-            "You're subscribed to {prod.description}".format(prod=product),
+            subject,
             text_body,
             settings.SUBSCRIPTION_FROM_EMAIL,
             [result['mozilla']['buyer']['email']],

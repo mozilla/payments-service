@@ -1,12 +1,9 @@
-{{ seller.name }}
-{{ seller.url }}
+{% extends 'braintree/emails/subscription_base.txt' %}
 
-Date          {{ date }}
-Receipt #     {{ transaction.uuid }}
+{% block info %}
 Paid with     {{ cc_type }} ending in {{ cc_truncated_id }}
 Product       {{ product.description }}
+Period        {{ bill_start }} - {{ bill_end }}
 Amount        ${{ moz_trans.amount }}
 Period        {{ bill_start }} - {{ bill_end }}
-
-TOTAL: {{ product.price.en }}
-Next payment: {{ next_pay_date }}
+{% endblock %}
