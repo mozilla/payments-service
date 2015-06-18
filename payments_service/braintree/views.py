@@ -216,6 +216,10 @@ class Webhook(UnprotectedAPIView):
             subject = '{prod.description}: subscription charge failed'.format(
                 prod=product,
             )
+        elif notice_kind == 'subscription_canceled':
+            subject = '{prod.description}: subscription canceled'.format(
+                prod=product,
+            )
         else:
             raise ValueError(
                 'No email configured for webhook notice: {}'

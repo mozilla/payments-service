@@ -3,7 +3,6 @@
 {% block info %}
 Paid with     {{ cc_type }} ending in {{ cc_truncated_id }}
 Product       {{ product.description }}
-Period        {{ bill_start }} - {{ bill_end }}
 Amount        ${{ moz_trans.amount }}
 Period        {{ bill_start }} - {{ bill_end }}
 {% endblock %}

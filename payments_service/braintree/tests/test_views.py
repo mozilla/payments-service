@@ -297,7 +297,7 @@ class TestWebhook(TestCase):
         eq_(res.status_code, 200)
         eq_(res.content, 'token')
 
-    def test_bas_solitude_response_for_verify(self):
+    def test_bad_solitude_response_for_verify(self):
         self.solitude.braintree.webhook.get.side_effect = HttpClientError
         res = self.get()
         eq_(res.status_code, 400)
@@ -317,7 +317,7 @@ class TestWebhook(TestCase):
         res = self.post()
         eq_(res.status_code, 400)
 
-    def test_send_email_for_subscription_charge(self):
+    def test_email_for_subscription_charge(self):
         notice = self.subscription_notice()
         self.solitude.braintree.webhook.post.return_value = notice
         self.post()
@@ -346,7 +346,7 @@ class TestWebhook(TestCase):
         assert 'TOTAL: $10.00' in msg, 'Unexpected: {}'.format(msg)
         assert 'Next payment: 11 Jul 2015' in msg, 'Unexpected: {}'.format(msg)
 
-    def test_send_email_for_subscription_charge_failure(self):
+    def test_email_for_subscription_charge_failure(self):
         notice = self.subscription_notice(
             kind='subscription_charged_unsuccessfully'
         )
@@ -365,6 +365,21 @@ class TestWebhook(TestCase):
             'Unexpected: {}'.format(msg)
         )
         assert 'TOTAL: $10.00' in msg, 'Unexpected: {}'.format(msg)
+
+    def test_email_for_subscription_canceled(self):
+        notice = self.subscription_notice(
+            kind='subscription_canceled'
+        )
+        self.solitude.braintree.webhook.post.return_value = notice
+        self.post()
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertEqual(mail.outbox[0].subject,
+                         'Brick: subscription canceled')
+
+        msg = mail.outbox[0].body
+        assert 'Product       Brick' in msg, 'Unexpected: {}'.format(msg)
+        assert 'Amount        $10.00' in msg, 'Unexpected: {}'.format(msg)
+        assert 'TOTAL' not in msg, 'Unexpected: {}'.format(msg)
 
     def test_ignore_inactionable_webhook(self):
         # Solitude returns a 204 when we do not need to act on the webhook.
