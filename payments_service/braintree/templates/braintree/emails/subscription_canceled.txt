@@ -1,0 +1,11 @@
+{% extends 'braintree/emails/subscription_base.txt' %}
+
+{% block info %}
+Product       {{ product.description }}
+Amount        ${{ moz_trans.amount }}
+
+Your subscription has been cancelled; you will not be billed again. If you had already paid for a period of time, your subscription will still be active through the end of that period.
+{% endblock %}
+
+{% block total %}
+{% endblock %}
