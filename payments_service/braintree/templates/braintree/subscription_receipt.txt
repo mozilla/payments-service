@@ -1,4 +1,4 @@
-{{ seller.id }}
+{{ seller.name }}
 {{ seller.url }}
 
 Date          {{ date }}
