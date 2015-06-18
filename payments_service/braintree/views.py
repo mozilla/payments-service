@@ -203,8 +203,6 @@ class Webhook(UnprotectedAPIView):
 
         # TODO: get the actual seller name, not the ID.
         # https://github.com/mozilla/payments-config/issues/7
-        # TODO: I think we need to get the actual price of the transaction here
-        # (localized).
         # TODO: link to terms and conditions for the payment.
         # https://github.com/mozilla/payments/issues/78
         # TODO: maybe localize the email?
@@ -212,6 +210,7 @@ class Webhook(UnprotectedAPIView):
 
         tpl = get_template('braintree/subscription_receipt.txt')
         text_body = tpl.render(Context(dict(
+            moz_trans=moz_trans,
             product=product,
             seller=sellers_by_product[product.id],
             result=result,
