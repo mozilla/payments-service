@@ -187,9 +187,7 @@ class Webhook(UnprotectedAPIView):
                  .format(b=result['mozilla']['buyer'],
                          k=result['braintree']['kind']))
 
-        # TODO: get the real product.
-        # https://github.com/mozilla/solitude/issues/481
-        product = products['mozilla-concrete-brick']
+        product = products[result['mozilla']['product']['public_id']]
 
         # TODO: use a real lookup in the config
         # https://github.com/mozilla/payments-config/issues/8
