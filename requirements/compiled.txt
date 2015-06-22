@@ -1,2 +1,4 @@
 # sha256: JblEmFBcLYAO5GXbDMGv8JexYVrcOsBCochc7KJk_Ao
-M2Crypto==0.21.1
+# pyrepo wheelhouse
+# sha256: eSnjUWPzFnUf4tM90UBXKeP6cJ-U_BopmJ7-gnFwXzk
+M2Crypto==0.22.3
