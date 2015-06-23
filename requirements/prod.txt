@@ -3,6 +3,8 @@
 # foo==1.2.3 and you list all dependencies explicitly.
 
 # sha256: -_EGYNso5_ZQvf9gTq_tWbTAmdjGG8bzyurqx64Rt4s
+# pyrepo wheelhouse
+# sha256: fKNJqk2YakMh2AcnrMExKC4iYZTAuGp3rovtE2CqJDg
 curling==0.4.1
 
 # sha256: agPOL-r90ZOguoom29l3PnV9Ll1eeTOmLqwSmBO9OBo
@@ -15,27 +17,37 @@ django-encrypted-cookie-session==2.0.0
 django-extensions==1.5.2
 
 # sha256: wOkPMEu_bxD2PgAZECmAyVDcaDMm0qTlDnGZ3sxDw2o
+# pyrepo wheelhouse
+# sha256: q7kbKt-NAQwzibZYmkbuVvi2YMyAMddmKWf-y4cK7aM
 django-statsd-mozilla==0.3.15
 
 # sha256: nOyK5RF0jPBMEQjB_Azl9L24mIaGCPKQzcCbz1Z4Sjc
 djangorestframework==3.1.1
 
 # sha256: vGM5kZpSNbnRqu4BHKVGQYQJjwxHyQmAAfkclxdlg_U
+# pyrepo wheelhouse
+# sha256: xiUWEQEvMEXw1e9H9urvZ5aeZ-9JCT3oVoQz6eTIswA
 httplib2==0.9.1
 
 # sha256: 4OAGEkrerWRjjMZsPNaTcSLfSgMZ7Yobb7whczHm3JY
 m2secret==0.1.1
 
 # sha256: l5mtnC6N_91J4fMDOTJoU_ttu6Hi_A8mAyMn0b9QRtA
+# pyrepo wheelhouse
+# sha256: 8-pJ3Gcxhviy4sdCCVHlVK0RdLIXSkYn0d8bjz9EY9c
 mock==1.0.1
 
 # sha256: Uv7_deGY27Jry3KPknbXbVvy5QIjYHEEQlwoIG1TXPw
 mozilla-logger==0.2
 
 # sha256: Q2B5YKWWQ9MkyHCDeHxNUmSAIh0eTUCgB-5NH0kGrms
+# pyrepo wheelhouse
+# sha256: oFHwTujsMwUFWrNNh7NsmkSTdeB8fWoFvK-kgynKx8M
 oauthlib==0.7.2
 
 # sha256: tTHG7k3bZ2ptsZ6BS9FwT5KJ5Wwfro7UF9brdg5SuCY
+# pyrepo wheelhouse
+# sha256: PWMqzIaGoHullsTeJTJxG3s2D4jECiiIE5WqIUn718g
 oauth2==1.5.211
 
 # sha256: jvMK5LLSNmbmzADT1pZl6W6mfir4f09zkvWi2jvjcvo
@@ -48,6 +60,8 @@ python-dateutil==1.5
 Pygments==2.0.2
 
 # sha256: FVBl66dI8zp1QkHagz1iXau_L86Q4wQ6aYbXMeAffW8
+# pyrepo wheelhouse
+# sha256: rhw8BQ7wHT_x8Re2Kyr1z3MGBJQpzv-Amzf4jTG9Zxg
 raven==4.0.3
 
 # sha256: jw9WgT-C0MJ9lXgiEmismvSPB2xx7mlpMwXOymyjVb0
@@ -57,4 +71,6 @@ requests==2.6.2
 slumber==0.7.0
 
 # sha256: RO9eCEULFCgVTsks91JMs4Bs8JpVifBFQmtqO3-EoFs
+# pyrepo wheelhouse
+# sha256: RdsWgxKmgg_XhpfHtv0BlvOvkiyOvIhUDt0Nb6_tVU0
 statsd==2.1.2
