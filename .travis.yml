@@ -7,7 +7,7 @@ cache:
   # https://github.com/travis-ci/travis-ci/issues/3239
   directories:
     - ~/.cache/pip
-before_script:
+after_script:
   - flake8 . --exclude=./docs/conf.py
 install:
   - pip install --find-links https://pyrepo.addons.mozilla.org/ peep

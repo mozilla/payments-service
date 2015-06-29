@@ -1,10 +1,11 @@
 from urllib import urlencode
 
+from mock import Mock
 from nose.tools import eq_, raises
 from slumber.exceptions import HttpClientError, HttpServerError
 
-from payments_service.base.tests import (AuthenticatedTestCase,
-                                         WithDynamicEndpoints)
+from payments_service.base.tests import (
+    APIMock, AuthenticatedTestCase, WithDynamicEndpoints)
 
 from .. import SolitudeBodyguard
 
@@ -24,6 +25,10 @@ class TestSolitudeBodyguard(AuthenticatedTestCase, WithDynamicEndpoints):
         # Set some default return values. These will most likely get overidden.
         self.solitude.services.status.get.return_value = {}
         self.solitude.services.status.post.return_value = {}
+
+        resource = APIMock(name='patch')
+        resource.patch.return_value = {}
+        self.solitude.services.status.return_value = resource
 
     def get(self, **kw):
         return self._request('get', **kw)
@@ -98,6 +103,15 @@ class TestSolitudeBodyguard(AuthenticatedTestCase, WithDynamicEndpoints):
         self.get(query_params={'foo': 1})
         call_args = self.solitude.services.status.get.call_args
         eq_(call_args, [new_args, new_kw])
+
+    def test_patch(self):
+
+        class Patch(SolitudeBodyguard):
+            methods = ['patch']
+            resource = 'services.status'
+
+        self.endpoint(Patch, r'^dynamic-endpoint/(?P<pk>[^/]+)/$')
+        eq_(self.client.patch('/dynamic-endpoint/1/').status_code, 200)
 
     def test_proxy_solitude_response(self):
         self.solitude.services.status.get.return_value = {
