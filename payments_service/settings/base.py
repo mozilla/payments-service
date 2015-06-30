@@ -91,8 +91,25 @@ DATABASES = {
 }
 
 # Only write emails to the console during development.
-EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+#
+# You can set the email variables in your environment to send real email.
+EMAIL_BACKEND = os.environ.get(
+    'SERVICE_EMAIL_BACKEND',
+    'django.core.mail.backends.console.EmailBackend'
+)
 
+EMAIL_HOST = os.environ.get('SERVICE_EMAIL_HOST', '')
+EMAIL_HOST_USER = os.environ.get('SERVICE_EMAIL_HOST_USER', '')
+EMAIL_HOST_PASSWORD = os.environ.get('SERVICE_EMAIL_HOST_PASSWORD', '')
+
+# Not negotiable.
+EMAIL_USE_TLS = True
+
+# A list of regex's that we will allow emails too. If empty then
+# emails will be sent to all address.
+#
+# This is not checked when the EMAIL_BACKEND is to console.
+EMAIL_ALLOWED_LIST = ['.*@mozilla\.com$']
 
 # Internationalization
 # https://docs.djangoproject.com/en/1.8/topics/i18n/
@@ -107,12 +124,10 @@ USE_L10N = True
 
 USE_TZ = True
 
-
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/1.8/howto/static-files/
 
 STATIC_URL = '/static/'
-
 
 REST_FRAMEWORK = {
     'DEFAULT_RENDERER_CLASSES': (
@@ -179,7 +194,6 @@ LOGGING = {
     }
 }
 
-
 TEST_RUNNER = 'django_nose.NoseTestSuiteRunner'
 
 NOSE_ARGS = [
@@ -190,7 +204,6 @@ NOSE_ARGS = [
 ]
 
 UNDER_TEST = os.environ.get('UNDER_TEST') == '1'
-
 
 # URL to private payment processor. https://github.com/mozilla/solitude/
 SOLITUDE_URL = os.environ.get('SOLITUDE_URL', 'http://solitude:2602')
