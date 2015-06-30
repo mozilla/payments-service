@@ -12,7 +12,7 @@ before_script:
 install:
   - pip install --find-links https://pyrepo.addons.mozilla.org/ peep
   - peep install --no-deps -r requirements/dev.txt --find-links https://pyrepo.addons.mozilla.org/
-  - peep install --no-deps -r requirements/compiled.txt --find-links https://pyrepo.addons.mozilla.org/
+  - peep install --no-deps -r requirements/compiled.txt --find-links https://pyrepo.addons.mozilla.org/wheelhouse/
 script: ./manage.py test
 notifications:
   irc:
