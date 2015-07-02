@@ -12,4 +12,5 @@ urlpatterns = patterns(
     url(r'^mozilla/paymethod/(?P<pk>[^/]+)?/?$', views.PayMethod.as_view(),
         name='mozilla.paymethod'),
     url(r'^webhook/$', views.Webhook.as_view(), name='webhook'),
+    url(r'^webhook/email/debug/$', views.debug_email, name='debug-email')
 )

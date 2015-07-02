@@ -3,22 +3,28 @@ import logging
 from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.mail import EmailMultiAlternatives, get_connection
-from django.template import Context
+from django.http import HttpResponse
+from django.template import Context, Template
 from django.template.loader import get_template
 
 from dateutil.parser import parse as parse_date
-from payments_config import products, sellers
+from payments_config import products
 from rest_framework.views import APIView
 from rest_framework.renderers import BaseRenderer
 from rest_framework.response import Response
 from slumber.exceptions import HttpClientError
 
+from payments_service.braintree.management.commands.premail import get_email
 from .. import solitude
 from ..base.views import error_400, error_403, UnprotectedAPIView
 from ..solitude import SolitudeBodyguard
 from .forms import SubscriptionForm
 
 log = logging.getLogger(__name__)
+
+
+def parsed_date(date):
+    return '{d.day} {d:%b} {d.year}'.format(d=parse_date(date))
 
 
 class TokenGenerator(SolitudeBodyguard):
@@ -189,7 +195,7 @@ class Webhook(UnprotectedAPIView):
             if webhook_result:
                 self.notify_buyer(webhook_result)
             else:
-                # Solitude is configurred to return a 204 when we do
+                # Solitude is configured to return a 204 when we do
                 # not need to act on the webhook.
                 log.warning('not notifying buyer of webhook result; '
                             'received empty response (204)')
@@ -205,6 +211,32 @@ class Webhook(UnprotectedAPIView):
 
         return Response(result, status=status)
 
+    def build_context(self, bt_trans, moz_trans, paymethod, product):
+        return {
+            'bill_start': parsed_date(bt_trans['billing_period_start_date']),
+            'bill_end': parsed_date(bt_trans['billing_period_end_date']),
+            'cc_truncated_id': paymethod['truncated_id'],
+            'cc_type': paymethod['type_name'],
+            'date': parsed_date(moz_trans['created']),
+            'next_pay_date': parsed_date(bt_trans['next_billing_date']),
+            'moz_trans': moz_trans,
+            'product': product,
+            'seller': product.seller,
+            'transaction': moz_trans,
+        }
+
+    def render_txt(self, data, kind):
+        template = get_template('braintree/emails/{}.txt'.format(kind))
+        return template.render(Context(data))
+
+    def render_html(self, data, kind, premailed):
+        if premailed == 'stored':
+            template = get_template(
+                'braintree/emails/{}.premailed.html'.format(kind))
+        else:
+            template = Template(get_email(kind + '.html', premailed))
+        return template.render(Context(data))
+
     def notify_buyer(self, result):
         log.debug('about to handle webhook: {s}'
                   .format(s=result))
@@ -215,19 +247,9 @@ class Webhook(UnprotectedAPIView):
                          k=notice_kind))
 
         product = products[result['mozilla']['product']['public_id']]
-
-        # TODO: use a real lookup in the config
-        # https://github.com/mozilla/payments-config/issues/8
-        sellers_by_product = {}
-        for seller_id, seller in sellers.items():
-            for p in seller.products:
-                sellers_by_product[p.id] = seller
-
         bt_trans = result['mozilla']['transaction']['braintree']
         moz_trans = result['mozilla']['transaction']['generic']
 
-        # TODO: get the actual seller name, not the ID.
-        # https://github.com/mozilla/payments-config/issues/7
         # TODO: link to terms and conditions for the payment.
         # https://github.com/mozilla/payments/issues/78
         # TODO: maybe localize the email?
@@ -251,36 +273,58 @@ class Webhook(UnprotectedAPIView):
                 .format(notice_kind)
             )
 
-        tpl = get_template('braintree/emails/{}.txt'.format(notice_kind))
-        text_body = tpl.render(Context(dict(
-            moz_trans=moz_trans,
-            product=product,
-            seller=sellers_by_product[product.id],
-            result=result,
-            date=parse_date(moz_trans['created']).strftime('%d %b %Y'),
-            transaction=moz_trans,
-            cc_type=result['mozilla']['paymethod']['type_name'],
-            cc_truncated_id=result['mozilla']['paymethod']['truncated_id'],
-            bill_start=parse_date(
-                bt_trans['billing_period_start_date']).strftime('%d %b %Y'),
-            bill_end=parse_date(
-                bt_trans['billing_period_end_date']).strftime('%d %b %Y'),
-            next_pay_date=parse_date(
-                bt_trans['next_billing_date']).strftime('%d %b %Y'),
-        )))
-
+        data = self.build_context(
+            bt_trans, moz_trans, result['mozilla']['paymethod'], product)
         connection = get_connection(fail_silently=False)
+
         mail = EmailMultiAlternatives(
             subject,
-            text_body,
+            self.render_txt(data, notice_kind),
             settings.SUBSCRIPTION_FROM_EMAIL,
             [result['mozilla']['buyer']['email']],
             reply_to=[settings.SUBSCRIPTION_REPLY_TO_EMAIL],
             connection=connection)
 
-        # TODO: send an HTML email.
-        # https://github.com/mozilla/payments-service/issues/59
-        #
-        # mail.attach_alternative(html_message, 'text/html')
-
+        # Temporary, only subscription_charged_successfully has been converted
+        # so far.
+        if notice_kind == 'subscription_charged_successfully':
+            mail.attach_alternative(
+                self.render_html(data, notice_kind, 'stored'),
+                'text/html')
         mail.send()
+
+
+def debug_email(request):
+    if not settings.DEBUG:
+        return error_403('Only available in debug mode.')
+
+    kind = request.GET.get('kind', 'subscription_charged_successfully')
+    premailed = 'regenerate' if bool(request.GET.get('premailed', 0)) else 'no'
+    log.info('Generating email with pre-mailed setting: {}'.format(premailed))
+    webhook = Webhook()
+
+    def parser(url):
+        # Returns "/braintree/mozilla/paymethod/2/"
+        # as "braintree.mozilla.payments(2)" to curling.
+        return url.split('/')[:-1], url.split('/')[0]
+
+    api = solitude.api()
+
+    # Just get the last transaction.
+    try:
+        bt = api.braintree.mozilla.transaction.get()[0]
+    except IndexError:
+        raise IndexError(
+            'No latest transaction found, ensure you buy a subscription and '
+            'complete a webhook from braintree (or use the braintree_webhook '
+            'command)'
+        )
+    moz = api.by_url(bt['transaction']).get()
+    method = api.by_url(bt['paymethod'], parser=parser).get()
+    product = products[api.by_url(moz['seller_product']).get()['public_id']]
+
+    # Render the HTML.
+    data = webhook.build_context(bt, moz, method, product)
+    response = webhook.render_html(data, kind, premailed)
+
+    return HttpResponse(response, status=200)

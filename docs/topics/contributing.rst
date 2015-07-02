@@ -26,6 +26,36 @@ This will read the ``EMAIL_ALLOWED_LIST`` setting and only send email to emails 
 
     EMAIL_ALLOWED_LIST = ['.*@mozilla\.com$']
 
+Debugging email
+---------------
+
+Debugging HTML email is hard. To see what an email looks like, you must first:
+
+* complete a subscription with a user
+* generate a transaction, either using a real Braintree webhook or the `braintree_webhook`_ command
+
+Ensure that ``DEBUG`` is enabled for payments-service.
+
+Visit: http://pay.dev:8000/api/braintree/webhook/email/debug/
+
+Parameters:
+* ``kind``: the kind of email to generate, matches the names of the webhooks for the `braintree_webhook`_ command. Default: ``subscription_charged_successfully``
+* ``premailed``: if the HTML should be pre-processed or not, any value turns processing on. Default: no.
+
+Generating processed HTML
+-------------------------
+
+Run the command::
+
+    python manage.py premail
+
+This will pre-generate all the HTML for premailed emails so they can be checked into git. It uses the value set in settings at::
+
+    EMAIL_URL_ROOT
+
+To find the CSS.
+
+
 Running Tests
 =============
 
@@ -43,3 +73,4 @@ https://github.com/mozilla/payments-service/
 .. _`Django settings`: https://docs.djangoproject.com/en/1.8/ref/settings/#email-host
 .. _`docker compose`: http://docs.docker.com/compose/
 .. _`payments-env`: https://github.com/mozilla/payments-env
+.. _`braintree webhook`: http://payments.readthedocs.org/en/latest/testing.html#generating-webhooks
