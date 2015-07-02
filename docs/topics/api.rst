@@ -193,6 +193,22 @@ their method of payment (e.g. a credit card) is saved for future purchases.
 .. _`Braintree payment methods`: https://developers.braintreepayments.com/javascript+python/guides/payment-methods
 .. _`payment methods`: https://solitude.readthedocs.org/en/latest/topics/braintree.html#id2
 
+Limited ability to alter the pay method is available. To set the payment method
+to inactive:
+
+.. http:patch:: /api/braintree/mozilla/paymethod/:id/
+
+    **Request**
+
+    .. code-block:: json
+
+        {"active": false}
+
+    **Response**
+
+    :status 200: response processed successfully.
+
+
 Subscriptions
 ~~~~~~~~~~~~~
 

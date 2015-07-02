@@ -1,13 +1,17 @@
+import json
 import urllib
 
 from django.conf import settings
 from django.core import mail
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.urlresolvers import reverse
+from django.test import RequestFactory
 
+import mock
 from nose.tools import eq_
 from slumber.exceptions import HttpClientError
 
+from payments_service.braintree.views import PayMethod
 from payments_service.base.tests import AuthenticatedTestCase, TestCase
 
 
@@ -37,7 +41,12 @@ class TestPayMethod(AuthenticatedTestCase):
     def setUp(self):
         super(TestPayMethod, self).setUp()
         self.url = reverse('braintree:mozilla.paymethod')
-        self.pay_method = {'id': 1}  # pretend this is a paymethod object
+        # pretend this is a paymethod object
+        self.pay_method = {
+            'resource_pk': 1,
+            'resource_uri': reverse('braintree:mozilla.paymethod',
+                                    args=['1']),
+        }
         self.solitude.braintree.mozilla.paymethod.get.return_value = [
             self.pay_method,
         ]
@@ -48,16 +57,20 @@ class TestPayMethod(AuthenticatedTestCase):
             url = '{url}?{query}'.format(url=url, query=query)
         return self.json(self.client.get(url))
 
-    def test_arg_replacement(self):
-        # Add some throw-away query parameters that will be replaced.
-        res, data = self.get(query='braintree_buyer__buyer__uuid=nope')
+    def test_get_does_replace(self):
+        request = RequestFactory().get('/')
 
-        eq_(res.status_code, 200, res)
-        eq_(data, [self.pay_method])
-        call_args = self.solitude.braintree.mozilla.paymethod.get.call_args
-        eq_(call_args,
-            [tuple(),
-             {'active': 1, 'braintree_buyer__buyer__uuid': self.buyer_uuid}])
+        class FakeUser:
+            uuid = 'nope'
+
+        request.user = FakeUser()
+        eq_(((), {'active': 1, 'braintree_buyer__buyer__uuid': 'nope'}),
+            PayMethod().replace_call_args(request, ['foo'], {'f': 'b'}))
+
+    def test_patch_does_not_replace(self):
+        request = RequestFactory().patch('/')
+        eq_((['foo'], {'f': 'b'}),
+            PayMethod().replace_call_args(request, ['foo'], {'f': 'b'}))
 
     def test_override_active_flag(self):
         res, data = self.get(query='active=0')
@@ -65,6 +78,32 @@ class TestPayMethod(AuthenticatedTestCase):
         eq_(res.status_code, 200, res)
         call_args = self.solitude.braintree.mozilla.paymethod.get.call_args
         eq_(call_args[1]['active'], '0')
+
+    def test_patch_inactive(self):
+        res, pay_methods = self.get()
+        pay_method = pay_methods[0]
+
+        resource = mock.Mock()
+        resource.get.return_value = {}
+        resource.patch.return_value = {}
+        self.solitude.braintree.mozilla.paymethod.return_value = resource
+        res = self.client.patch(pay_method['resource_uri'],
+                                data=json.dumps({'active': False}),
+                                content_type='application/json')
+        eq_(res.status_code, 200, res)
+        resource.patch.assert_called_with({'active': False})
+
+    def test_patch_wrong(self):
+        res, pay_methods = self.get()
+        pay_method = pay_methods[0]
+
+        resource = mock.Mock()
+        resource.get.side_effect = HttpClientError
+        self.solitude.braintree.mozilla.paymethod.return_value = resource
+        res = self.client.patch(pay_method['resource_uri'],
+                                data=json.dumps({'active': False}),
+                                content_type='application/json')
+        eq_(res.status_code, 403, res)
 
 
 class TestSubscribe(AuthenticatedTestCase):

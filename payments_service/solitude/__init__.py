@@ -62,25 +62,38 @@ class SolitudeBodyguard(APIView):
         """
         return args, kw
 
-    def get(self, request):
-        return self._api_request(request, 'get', **request.REQUEST)
+    def get(self, request, pk=None):
+        return self._api_request(request, 'get', resource_pk=pk,
+                                 **request.REQUEST)
 
-    def post(self, request):
+    def patch(self, request, pk=None):
+        if pk is None:
+            return error_400()
+        return self._api_request(request, 'patch', request.data or {},
+                                 resource_pk=pk)
+
+    def post(self, request, pk=None):
         return self._api_request(request, 'post', request.data or {})
 
     def _api_request(self, django_request, method, *args, **kw):
+        resource_pk = kw.pop('resource_pk', None)
         if method.lower() not in self.methods:
+            log.debug('{}: ignoring method: {}'.format(self.__class__.__name__,
+                                                       method.upper()))
             return error_405()
 
         # Get the endpoint + method, such as api.services.status.get
-        api_request = getattr(self._resource(), method)
+        api_request = getattr(self._resource(pk=resource_pk), method)
 
         # Allow this view to replace call args if it wants to.
         args, kw = self.replace_call_args(django_request, args, kw)
 
-        log.info('solitude: about to request {resource}.{method}{args}{kw}'
+        log.info('solitude: about to request '
+                 '{resource}{instance}.{method}{args}{kw}'
                  .format(method=method, resource=self.resource,
-                         args=args, kw=kw))
+                         args=args, kw=kw,
+                         instance='({})'.format(resource_pk)
+                                  if resource_pk else ''))
         try:
             result = api_request(*args, **kw)
         except HttpClientError, exc:
@@ -90,7 +103,7 @@ class SolitudeBodyguard(APIView):
 
         return Response(result)
 
-    def _resource(self):
+    def _resource(self, pk=None):
         """
         Returns the Curling API resource object, i.e. minus the
         request method.
@@ -102,9 +115,18 @@ class SolitudeBodyguard(APIView):
         this returns
 
             api().services.status
+
+        For object instances, you can also pass in a pk (primary key)
+        which results in something like:
+
+            api().services.object(pk)
+
         """
         resource = api()
         url_paths = self.resource.split('.')
         while len(url_paths):
             resource = getattr(resource, url_paths.pop(0))
+
+        if pk:
+            resource = resource(pk)
         return resource

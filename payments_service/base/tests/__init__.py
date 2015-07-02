@@ -93,11 +93,12 @@ class WithDynamicEndpoints(DjangoTestCase):
     Mixin to allow registration of ad-hoc views.
     """
 
-    def endpoint(self, view):
+    def endpoint(self, view, url_regex=None):
         """
         Register a view function or view class temporarily
         as the handler for requests to /dynamic-endpoint
         """
+        url_regex = url_regex or r'^dynamic-endpoint$'
         try:
             is_class = issubclass(view, APIView)
         except TypeError:
@@ -106,7 +107,7 @@ class WithDynamicEndpoints(DjangoTestCase):
             view = view.as_view()
         dynamic_urls.urlpatterns = patterns(
             '',
-            url(r'^dynamic-endpoint$', view),
+            url(url_regex, view),
         )
         self.addCleanup(self._clean_up_dynamic_urls)
 

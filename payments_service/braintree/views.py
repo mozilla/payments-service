@@ -14,7 +14,7 @@ from rest_framework.response import Response
 from slumber.exceptions import HttpClientError
 
 from .. import solitude
-from ..base.views import error_400, UnprotectedAPIView
+from ..base.views import error_400, error_403, UnprotectedAPIView
 from ..solitude import SolitudeBodyguard
 from .forms import SubscriptionForm
 
@@ -33,7 +33,7 @@ class PayMethod(SolitudeBodyguard):
     """
     Get saved payment methods for the logged in buyer.
     """
-    methods = ['get']
+    methods = ['get', 'patch']
     resource = 'braintree.mozilla.paymethod'
 
     def replace_call_args(self, request, args, kw):
@@ -45,11 +45,36 @@ class PayMethod(SolitudeBodyguard):
         The important part is that it only lets you get
         payment methods for the logged in user.
         """
+        if request.method.lower() != 'get':
+            return args, kw
+
         replaced_kw = {
             'active': kw.get('active', 1),  # active by default
             'braintree_buyer__buyer__uuid': request.user.uuid,
         }
         return tuple(), replaced_kw
+
+    def patch(self, request, pk=None):
+        """
+        Allow patching of payment methods.
+
+        * verify that the user wanting to make a patch is allowed too
+        * send through the patch
+        """
+        res = self.get(request, pk=pk)
+        # At the moment get returns a good or bad response as opposed to
+        # raising an error, but hides the status code from solitude.
+        #
+        # We'll assume anything not a 200 is 403.
+        if res.status_code != 200:
+            log.warning(
+                '_api_request returned: {} when trying to '
+                'access paymethod: {}, user: {}'
+                .format(res.status_code, pk, request.user.uuid)
+            )
+            return error_403('Not allowed')
+
+        return super(PayMethod, self).patch(request, pk=pk)
 
 
 class Subscriptions(APIView):
