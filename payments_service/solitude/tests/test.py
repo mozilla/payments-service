@@ -1,6 +1,5 @@
 from urllib import urlencode
 
-from mock import Mock
 from nose.tools import eq_, raises
 from slumber.exceptions import HttpClientError, HttpServerError
 

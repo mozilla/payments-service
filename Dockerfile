@@ -10,6 +10,7 @@ RUN pip install --find-links https://pyrepo.addons.mozilla.org/ peep
 # TODO: add caching when available. https://github.com/erikrose/peep/issues/93
 RUN peep install \
     --no-deps -r /srv/payments-service/requirements/dev.txt \
+    --no-deps -r /srv/payments-service/requirements/compiled.txt \
     --find-links https://pyrepo.addons.mozilla.org/
 
 

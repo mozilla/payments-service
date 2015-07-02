@@ -7,12 +7,12 @@ cache:
   # https://github.com/travis-ci/travis-ci/issues/3239
   directories:
     - ~/.cache/pip
-after_script:
+before_script:
   - flake8 . --exclude=./docs/conf.py
 install:
   - pip install --find-links https://pyrepo.addons.mozilla.org/ peep
   - peep install --no-deps -r requirements/dev.txt --find-links https://pyrepo.addons.mozilla.org/
-  - peep install --no-deps -r requirements/compiled.txt --find-links https://pyrepo.addons.mozilla.org/wheelhouse/
+  - peep install --no-deps -r requirements/compiled.txt --find-links https://pyrepo.addons.mozilla.org/travis/
 script: ./manage.py test
 notifications:
   irc:
