@@ -25,6 +25,10 @@ class SolitudeBuyer(AnonymousUser):
         self.uuid = buyer_uuid
         self.uri = '/generic/buyer/{0}/'.format(self.pk)
 
+    def __str__(self):
+        return '<{cls} {uuid}>'.format(cls=self.__class__.__name__,
+                                       uuid=self.uuid)
+
     def is_anonymous(self):
         return False
 
