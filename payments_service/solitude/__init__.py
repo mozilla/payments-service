@@ -68,6 +68,7 @@ class SolitudeBodyguard(APIView):
 
     def patch(self, request, pk=None):
         if pk is None:
+            log.info('{}: PATCH requires a primary key'.format(request.path))
             return error_400()
         return self._api_request(request, 'patch', request.data or {},
                                  resource_pk=pk)

@@ -112,6 +112,15 @@ class TestSolitudeBodyguard(AuthenticatedTestCase, WithDynamicEndpoints):
         self.endpoint(Patch, r'^dynamic-endpoint/(?P<pk>[^/]+)/$')
         eq_(self.client.patch('/dynamic-endpoint/1/').status_code, 200)
 
+    def test_patch_requires_pk(self):
+
+        class Patch(SolitudeBodyguard):
+            methods = ['patch']
+            resource = 'services.status'
+
+        self.endpoint(Patch)
+        eq_(self.client.patch('/dynamic-endpoint').status_code, 400)
+
     def test_proxy_solitude_response(self):
         self.solitude.services.status.get.return_value = {
             'item': 'value'
