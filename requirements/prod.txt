@@ -74,3 +74,11 @@ slumber==0.7.0
 # pyrepo wheelhouse
 # sha256: RdsWgxKmgg_XhpfHtv0BlvOvkiyOvIhUDt0Nb6_tVU0
 statsd==2.1.2
+
+# For premailer
+# sha256: f6joecG9w5hzKd2vyxLhZEwMe8iooYGt7NmfzZePnIY
+premailer==2.9.2
+# sha256: 8SYdb2R6jjM0u0zzTTK7eF6JEDJjWvboOFb5SWeYDDY
+cssselect==0.9.1
+# sha256: RQR2L12IALmPpxN0nACs_vhBmCZWj5NjxJDkUUaoka8
+cssutils==1.0

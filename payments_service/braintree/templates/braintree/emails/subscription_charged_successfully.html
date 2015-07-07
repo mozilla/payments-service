@@ -1,0 +1,13 @@
+{# subscription header is added automatically here #}
+    <table>
+        <tr><th>Date</th><td>{{ date }}</td></tr>
+        <tr><th>Receipt #</th><td>{{ transaction.uuid }}</td></tr>
+        <tr><th>Paid with</th><td><div class="card-icon cctype-{{ cc_type|lower }}"></div> ending in {{ cc_truncated_id }}</td></tr>
+        <tr><th>&nbsp;</th><td></td></tr>
+        <tr><th>{{ product.description }}</th><td>${{ moz_trans.amount }}</td></tr>
+        <tr><th>Period</th><td>{{ bill_start }} - {{ bill_end }}</td></tr>
+        <tr><th>&nbsp;</th><td></td></tr>
+        <tr><th>Total</th><td>${{ moz_trans.amount }}</td></tr>
+        <tr><th>Next payment</th><td>{{ next_pay_date }}</td></tr>
+    </table>
+{# subscription footer is added automatically here #}

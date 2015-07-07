@@ -111,6 +111,9 @@ EMAIL_USE_TLS = True
 # This is not checked when the EMAIL_BACKEND is to console.
 EMAIL_ALLOWED_LIST = ['.*@mozilla\.com$']
 
+# The root URL for all CSS etc.
+EMAIL_URL_ROOT = 'http://192.168.99.100:8000'
+
 # Internationalization
 # https://docs.djangoproject.com/en/1.8/topics/i18n/
 
