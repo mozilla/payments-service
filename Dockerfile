@@ -1,7 +1,9 @@
 # For the full stack, see https://github.com/mozilla/payments-env/
 
-FROM mozillamarketplace/centos-mysql-mkt:0.2
+FROM mozillamarketplace/centos-mysql-mkt:latest
 RUN yum install -y supervisor bash-completion && yum clean all
+# This is for the cryptography module:
+RUN yum install -y libffi-devel python-devel openssl-devel && yum clean all
 
 # Copy requirements over first to cache peep install.
 COPY requirements /srv/payments-service/requirements

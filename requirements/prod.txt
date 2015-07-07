@@ -10,8 +10,8 @@ curling==0.4.1
 # sha256: agPOL-r90ZOguoom29l3PnV9Ll1eeTOmLqwSmBO9OBo
 Django==1.8
 
-# sha256: vvLOJI4qaZ9cKlhG7lV9qmX_xnAiQmSmG7hAMuhuoVY
-django-encrypted-cookie-session==2.0.0
+# sha256: aWY0eCl5HJxGhanJg2wDsOoUra-zP_cJt-Oimh9qIFw
+django-encrypted-cookie-session==3.0.0
 
 # sha256: jMb9abCD_WP_dy-6QnVit5OCy9FPhN37NA_nab1jL7E
 django-extensions==1.5.2
@@ -24,13 +24,19 @@ django-statsd-mozilla==0.3.15
 # sha256: nOyK5RF0jPBMEQjB_Azl9L24mIaGCPKQzcCbz1Z4Sjc
 djangorestframework==3.1.1
 
+# sha256: -hClqi61GXlEqfLnxpcYDdN9agGL1fz6agF51mFYQ6U
+enum34==1.0.4
+
 # sha256: vGM5kZpSNbnRqu4BHKVGQYQJjwxHyQmAAfkclxdlg_U
 # pyrepo wheelhouse
 # sha256: xiUWEQEvMEXw1e9H9urvZ5aeZ-9JCT3oVoQz6eTIswA
 httplib2==0.9.1
 
-# sha256: 4OAGEkrerWRjjMZsPNaTcSLfSgMZ7Yobb7whczHm3JY
-m2secret==0.1.1
+# sha256: my_FC9PEujBrllG2lBHvIgJtTYM1uTr8IhTO8SRs5wc
+idna==2.0
+
+# sha256: Z_nkMflvSZEtamuWVE-JGMifovDVszT7x8y051I1TvA
+ipaddress==1.0.7
 
 # sha256: l5mtnC6N_91J4fMDOTJoU_ttu6Hi_A8mAyMn0b9QRtA
 # pyrepo wheelhouse
@@ -52,6 +58,12 @@ oauth2==1.5.211
 
 # sha256: jvMK5LLSNmbmzADT1pZl6W6mfir4f09zkvWi2jvjcvo
 payments-config==0.0.8
+
+# sha256: mG9LKd89WZeR-lvFXoRs6fY-q8fm8ZsrNNb0mPCdqQ8
+pyasn1==0.1.8
+
+# sha256: IVgp4OOKeEAjPOGOct5FXdlNp5ftymF-9o7gtdlT9uM
+pycparser==2.14
 
 # sha256: aFwGTOdTFr29NSNqh8a_kNNJvdW6ReHLWaaHs6A1DcY
 python-dateutil==1.5
