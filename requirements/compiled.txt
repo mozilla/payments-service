@@ -4,5 +4,6 @@
 # sha256: eSnjUWPzFnUf4tM90UBXKeP6cJ-U_BopmJ7-gnFwXzk
 M2Crypto==0.22.3
 
+# sha256: oIuB2YqxQaiZUzrqRIfyssGDGp9Y520QPKtb_hRkBbM
 # sha256: bOShGrSFpnqJmqPggMl7IqnfQMcHe9kUaoIdOHLPIDc
 lxml==3.4.3
