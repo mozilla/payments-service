@@ -42,7 +42,7 @@ class PayMethod(SolitudeBodyguard):
     methods = ['get', 'patch']
     resource = 'braintree.mozilla.paymethod'
 
-    def replace_call_args(self, request, args, kw):
+    def replace_call_args(self, request, method, args, kw):
         """
         Replace the GET parameters with custom values.
 
@@ -51,14 +51,19 @@ class PayMethod(SolitudeBodyguard):
         The important part is that it only lets you get
         payment methods for the logged in user.
         """
-        if request.method.lower() != 'get':
+        if method.lower() != 'get':
             return args, kw
 
         replaced_kw = {
-            'active': kw.get('active', 1),  # active by default
             'braintree_buyer__buyer__uuid': request.user.uuid,
         }
-        return tuple(), replaced_kw
+        if request.method.lower() == 'get':
+            # When getting payment methods, default to active payment methods.
+            # However, when doing a get *within* something like a patch
+            # handler, do not restrict to active/inactive.
+            replaced_kw['active'] = kw.get('active', True)
+
+        return args, replaced_kw
 
     def patch(self, request, pk=None):
         """
@@ -67,12 +72,12 @@ class PayMethod(SolitudeBodyguard):
         * verify that the user wanting to make a patch is allowed too
         * send through the patch
         """
+        # Get the active paymethod filtered by logged in user.
         res = self.get(request, pk=pk)
-        # At the moment get returns a good or bad response as opposed to
-        # raising an error, but hides the status code from solitude.
-        #
-        # We'll assume anything not a 200 is 403.
+
         if res.status_code != 200:
+            # This would be a 404 if the user is trying to patch a
+            # paymethod they do not own.
             log.warning(
                 '_api_request returned: {} when trying to '
                 'access paymethod: {}, user: {}'

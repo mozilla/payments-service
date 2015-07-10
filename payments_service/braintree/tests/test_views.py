@@ -138,13 +138,15 @@ class TestPayMethod(AuthenticatedTestCase):
             uuid = 'nope'
 
         request.user = FakeUser()
-        eq_(((), {'active': 1, 'braintree_buyer__buyer__uuid': 'nope'}),
-            PayMethod().replace_call_args(request, ['foo'], {'f': 'b'}))
+        eq_((['foo'], {'active': 1, 'braintree_buyer__buyer__uuid': 'nope'}),
+            PayMethod().replace_call_args(request, request.method,
+                                          ['foo'], {'f': 'b'}))
 
     def test_patch_does_not_replace(self):
         request = RequestFactory().patch('/')
         eq_((['foo'], {'f': 'b'}),
-            PayMethod().replace_call_args(request, ['foo'], {'f': 'b'}))
+            PayMethod().replace_call_args(request, request.method,
+                                          ['foo'], {'f': 'b'}))
 
     def test_override_active_flag(self):
         res, data = self.get(query='active=0')
@@ -167,17 +169,31 @@ class TestPayMethod(AuthenticatedTestCase):
         eq_(res.status_code, 200, res)
         resource.patch.assert_called_with({'active': False})
 
-    def test_patch_wrong(self):
+    def test_cannot_patch_another_buyers_paymethod(self):
         res, pay_methods = self.get()
         pay_method = pay_methods[0]
 
         resource = mock.Mock()
+        # Simulate a 404 in case a buyer asks for a paymethod
+        # belonging to another user.
         resource.get.side_effect = HttpClientError
         self.solitude.braintree.mozilla.paymethod.return_value = resource
+
         res = self.client.patch(pay_method['resource_uri'],
                                 data=json.dumps({'active': False}),
                                 content_type='application/json')
         eq_(res.status_code, 403, res)
+
+        # Check that the filtering occurred like this:
+        # braintree.mozilla.paymethod(1).get(braintree_buyer__buyer__uuid=uuid)
+        eq_(self.solitude.braintree.mozilla.paymethod.call_args[0][0],
+            str(self.pay_method['resource_pk']))
+        eq_(resource.get.call_args[1]['braintree_buyer__buyer__uuid'],
+            self.buyer_uuid)
+        assert 'active' not in resource.get.call_args[1], (
+            'should not filter GETs by `active` when patching in case '
+            'inactive paymethods need to be patched.'
+        )
 
 
 class TestSubscribe(AuthenticatedTestCase):
