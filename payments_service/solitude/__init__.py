@@ -37,7 +37,7 @@ class SolitudeBodyguard(APIView):
     # resource = 'services.status'
     resource = None
 
-    def replace_call_args(self, django_request, args, kw):
+    def replace_call_args(self, django_request, method, args, kw):
         """
         Optional hook to replace the arguments before executing the
         slumber callable.
@@ -46,6 +46,11 @@ class SolitudeBodyguard(APIView):
 
         *django_request*
             Original Django request object.
+
+        *method*
+            Effective request method. This might be different
+            than django_request.method in the case where one method
+            handler makes sub-requests.
 
         *args*
             Original slumber API call arguments.
@@ -87,7 +92,8 @@ class SolitudeBodyguard(APIView):
         api_request = getattr(self._resource(pk=resource_pk), method)
 
         # Allow this view to replace call args if it wants to.
-        args, kw = self.replace_call_args(django_request, args, kw)
+        args, kw = self.replace_call_args(django_request, method.lower(),
+                                          args, kw)
 
         log.info('solitude: about to request '
                  '{resource}{instance}.{method}{args}{kw}'

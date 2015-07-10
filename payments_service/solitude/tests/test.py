@@ -94,7 +94,7 @@ class TestSolitudeBodyguard(AuthenticatedTestCase, WithDynamicEndpoints):
             methods = ['get']
             resource = 'services.status'
 
-            def replace_call_args(self, django_request, args, kw):
+            def replace_call_args(self, django_request, method, args, kw):
                 return new_args, new_kw
 
         self.endpoint(Replacer)
