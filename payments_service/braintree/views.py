@@ -18,7 +18,7 @@ from payments_service.braintree.management.commands.premail import get_email
 from .. import solitude
 from ..base.views import error_400, error_403, UnprotectedAPIView
 from ..solitude import SolitudeBodyguard
-from .forms import SubscriptionForm
+from .forms import ChangeSubscriptionPayMethodForm, SubscriptionForm
 
 log = logging.getLogger(__name__)
 
@@ -86,6 +86,24 @@ class PayMethod(SolitudeBodyguard):
             return error_403('Not allowed')
 
         return super(PayMethod, self).patch(request, pk=pk)
+
+
+class ChangeSubscriptionPayMethod(APIView):
+
+    def post(self, request):
+        form = ChangeSubscriptionPayMethodForm(request.user, request.DATA)
+        if not form.is_valid():
+            return error_400(response=form.errors)
+
+        solitude.api().braintree.subscription.paymethod.change.post({
+            'paymethod': form.cleaned_data['new_pay_method_uri'],
+            'subscription': form.cleaned_data['subscription_uri'],
+        })
+        log.info('changed paymethod to {} for subscription {} belonging to '
+                 'user {}'.format(form.cleaned_data['new_pay_method_uri'],
+                                  form.cleaned_data['subscription_uri'],
+                                  request.user))
+        return Response({}, status=204)
 
 
 class Subscriptions(APIView):
@@ -307,12 +325,6 @@ def debug_email(request):
     premailed = 'regenerate' if bool(request.GET.get('premailed', 0)) else 'no'
     log.info('Generating email with pre-mailed setting: {}'.format(premailed))
     webhook = Webhook()
-
-    def parser(url):
-        # Returns "/braintree/mozilla/paymethod/2/"
-        # as "braintree.mozilla.payments(2)" to curling.
-        return url.split('/')[:-1], url.split('/')[0]
-
     api = solitude.api()
 
     # Just get the last transaction.
@@ -325,7 +337,7 @@ def debug_email(request):
             'command)'
         )
     moz = api.by_url(bt['transaction']).get()
-    method = api.by_url(bt['paymethod'], parser=parser).get()
+    method = api.by_url(bt['paymethod']).get()
     product = products[api.by_url(moz['seller_product']).get()['public_id']]
 
     # Render the HTML.

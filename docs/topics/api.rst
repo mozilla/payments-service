@@ -238,8 +238,27 @@ with a saved credit card, submit ``pay_method_uri``.
 
     :status 204: subscription created successfully
 
-.. _`payment method`: https://solitude.readthedocs.org/en/latest/topics/braintree.html#id2
 .. _`plan ID`: https://developers.braintreepayments.com/javascript+python/reference/response/plan
+
+.. http:post:: /api/braintree/subscriptions/paymethod/change/
+
+    Change the `payment method`_ for a given subscription.
+    The subscription and payment method objects must belong
+    to the signed in user.
+
+    **Request**
+
+    :param string new_pay_method_uri:
+        Solitude URI to the new `payment method`_ for the subscription.
+    :param string subscription_uri:
+        Solitude URI to the `subscription`_ you want to change.
+
+    **Response**
+
+    :status 204: subscription changed successfully
+
+.. _`payment method`: https://solitude.readthedocs.org/en/latest/topics/braintree.html#id2
+.. _`subscription`: http://solitude.readthedocs.org/en/latest/topics/braintree.html#subscriptions
 
 Webhooks
 ~~~~~~~~
