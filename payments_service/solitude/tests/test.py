@@ -1,4 +1,5 @@
 from urllib import urlencode
+import unittest
 
 from nose.tools import eq_, raises
 from slumber.exceptions import HttpClientError, HttpServerError
@@ -6,7 +7,7 @@ from slumber.exceptions import HttpClientError, HttpServerError
 from payments_service.base.tests import (
     APIMock, AuthenticatedTestCase, WithDynamicEndpoints)
 
-from .. import SolitudeBodyguard
+from .. import SolitudeBodyguard, url_parser
 
 
 class TestSolitudeBodyguard(AuthenticatedTestCase, WithDynamicEndpoints):
@@ -152,3 +153,26 @@ class TestSolitudeBodyguard(AuthenticatedTestCase, WithDynamicEndpoints):
         eq_(data['error_message'], 'Bad Request')
         eq_(data['error_response'], exc.content)
         eq_(res.status_code, 400)
+
+
+class TestUrlParser(unittest.TestCase):
+
+    def test_no_pk(self):
+        eq_(url_parser('/thing/'), (['thing'], None))
+
+    def test_resource_pk_no_trailing_slash(self):
+        eq_(url_parser('/thing/1'), (['thing'], '1'))
+
+    def test_single_resource_pk(self):
+        eq_(url_parser('/thing/1/'), (['thing'], '1'))
+
+    def test_double_resource_pk(self):
+        eq_(url_parser('/service/thing/1/'), (['service', 'thing'], '1'))
+
+    def test_triple_resource_pk(self):
+        eq_(url_parser('/service/category/thing/1/'),
+            (['service', 'category', 'thing'], '1'))
+
+    def test_triple_resource_no_pk(self):
+        eq_(url_parser('/service/category/thing/'),
+            (['service', 'category', 'thing'], None))

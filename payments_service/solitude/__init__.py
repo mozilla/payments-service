@@ -13,10 +13,35 @@ log = logging.getLogger(__name__)
 
 
 def api():
-    conn = API(settings.SOLITUDE_URL)
+    conn = SolitudeAPI(settings.SOLITUDE_URL)
     conn.activate_oauth(settings.SOLITUDE_KEY,
                         settings.SOLITUDE_SECRET)
     return conn
+
+
+def url_parser(url):
+    """
+    Curling URL parser for resources with numeric primary keys.
+
+    It helps convert URLs into Slumber resources like:
+
+    /service/category/thing/1/ -> service.category.thing(1)
+    """
+    # Split all URL parts ignoring empties (from slashes).
+    parts = [p for p in url.split('/') if p != '']
+
+    pk = None
+    if parts[-1].isdigit():
+        pk = parts.pop()
+
+    return parts, pk
+
+
+class SolitudeAPI(API):
+
+    def by_url(self, url, **kw):
+        kw.setdefault('parser', url_parser)
+        return super(SolitudeAPI, self).by_url(url, **kw)
 
 
 class SolitudeBodyguard(APIView):

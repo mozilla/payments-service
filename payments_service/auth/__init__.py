@@ -9,13 +9,13 @@ log = logging.getLogger(__name__)
 
 class SolitudeBuyer(AnonymousUser):
     """
-    Fake Django user to represent a Solitude buyer.
+    Fake Django user to represent a generic Solitude buyer.
 
     Properties:
 
-    * `uuid`: the Solitude UUID.
-    * `pk`: the Solitude pk.
-    * `uri`: the Solitude uri.
+    * `uuid`: the Solitude generic buyer's UUID.
+    * `pk`: the Solitude generic buyer's primary key.
+    * `uri`: the Solitude generic buyer's URI.
     """
     id = pk = uuid = None
     is_active = True
