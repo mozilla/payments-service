@@ -93,10 +93,8 @@ DATABASES = {
 # Only write emails to the console during development.
 #
 # You can set the email variables in your environment to send real email.
-EMAIL_BACKEND = os.environ.get(
-    'SERVICE_EMAIL_BACKEND',
-    'django.core.mail.backends.console.EmailBackend'
-)
+EMAIL_BACKEND = (os.environ.get('SERVICE_EMAIL_BACKEND') or
+                 'django.core.mail.backends.console.EmailBackend')
 
 EMAIL_HOST = os.environ.get('SERVICE_EMAIL_HOST', '')
 EMAIL_HOST_USER = os.environ.get('SERVICE_EMAIL_HOST_USER', '')
