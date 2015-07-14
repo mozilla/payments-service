@@ -1,13 +1,41 @@
 {# subscription header is added automatically here #}
     <table>
-        <tr><th>Date</th><td>{{ date }}</td></tr>
-        <tr><th>Receipt #</th><td>{{ transaction.uuid }}</td></tr>
-        <tr><th>Paid with</th><td><div class="card-icon cctype-{{ cc_type|lower }}"></div> ending in {{ cc_truncated_id }}</td></tr>
-        <tr><th>&nbsp;</th><td></td></tr>
-        <tr><th>{{ product.description }}</th><td>${{ moz_trans.amount }}</td></tr>
-        <tr><th>Period</th><td>{{ bill_start }} - {{ bill_end }}</td></tr>
-        <tr><th>&nbsp;</th><td></td></tr>
-        <tr><th>Total</th><td>${{ moz_trans.amount }}</td></tr>
-        <tr><th>Next payment</th><td>{{ next_pay_date }}</td></tr>
+        <tr>
+            <th scope="row">Date</th>
+            <td>{{ date }}</td>
+        </tr>
+        <tr>
+            <th scope="row">Receipt #</th>
+            <td>{{ transaction.uuid }}</td>
+        </tr>
+        <tr class="cc">
+            <th scope="row">Paid with</th>
+            {# __CC_TYPE__ is post-process replaced #}
+            <td><img class="card" src="/svg/__CC_TYPE__.svg" width="40" /> ending in {{ cc_truncated_id }}</td>
+        </tr>
+        <tr class="desc">
+            <th scope="row">{{ product.description }}</th>
+            <td>${{ moz_trans.amount }} <span>per month</span></td>
+        </tr>
+        <tr class="period" colspan="2">
+            <th scope="row">Period</th>
+            <td>{{ bill_start }} - {{ bill_end }}</td>
+        </tr>
     </table>
+
+    <div class="divider"></div>
+
+    <table class="total-amount">
+        <tr class="total">
+            <th scope="row">Total</th>
+            <td>${{ moz_trans.amount }}</td>
+        </tr>
+        <tr class="next-payment">
+            <th scope="row">Next payment</th>
+            <td>{{ next_pay_date }}</td>
+        </tr>
+    </table>
+
+    <a class="terms" href="#">Terms and conditions</a>
+
 {# subscription footer is added automatically here #}

@@ -110,7 +110,8 @@ EMAIL_USE_TLS = True
 EMAIL_ALLOWED_LIST = ['.*@mozilla\.com$']
 
 # The root URL for all CSS etc.
-EMAIL_URL_ROOT = 'http://192.168.99.100:8000'
+EMAIL_URL_ROOT = (os.environ.get('EMAIL_URL_ROOT') or
+                  'http://192.168.59.103:8000')
 
 # Internationalization
 # https://docs.djangoproject.com/en/1.8/topics/i18n/
