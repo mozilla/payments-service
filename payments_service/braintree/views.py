@@ -18,7 +18,8 @@ from payments_service.braintree.management.commands.premail import get_email
 from .. import solitude
 from ..base.views import error_400, error_403, UnprotectedAPIView
 from ..solitude import SolitudeBodyguard
-from .forms import ChangeSubscriptionPayMethodForm, SubscriptionForm
+from .forms import (ChangeSubscriptionPayMethodForm, ManageSubscriptionForm,
+                    SubscriptionForm)
 
 log = logging.getLogger(__name__)
 
@@ -86,24 +87,6 @@ class PayMethod(SolitudeBodyguard):
             return error_403('Not allowed')
 
         return super(PayMethod, self).patch(request, pk=pk)
-
-
-class ChangeSubscriptionPayMethod(APIView):
-
-    def post(self, request):
-        form = ChangeSubscriptionPayMethodForm(request.user, request.DATA)
-        if not form.is_valid():
-            return error_400(response=form.errors)
-
-        solitude.api().braintree.subscription.paymethod.change.post({
-            'paymethod': form.cleaned_data['new_pay_method_uri'],
-            'subscription': form.cleaned_data['subscription_uri'],
-        })
-        log.info('changed paymethod to {} for subscription {} belonging to '
-                 'user {}'.format(form.cleaned_data['new_pay_method_uri'],
-                                  form.cleaned_data['subscription_uri'],
-                                  request.user))
-        return Response({}, status=204)
 
 
 class Subscriptions(APIView):
@@ -179,6 +162,41 @@ class Subscriptions(APIView):
             log.info('creating new braintree customer for {buyer}'
                      .format(buyer=buyer.pk))
             self.api.braintree.customer.post({'uuid': buyer.uuid})
+
+
+class ChangeSubscriptionPayMethod(APIView):
+
+    def post(self, request):
+        form = ChangeSubscriptionPayMethodForm(request.user, request.DATA)
+        if not form.is_valid():
+            return error_400(response=form.errors)
+
+        solitude.api().braintree.subscription.paymethod.change.post({
+            'paymethod': form.cleaned_data['new_pay_method_uri'],
+            'subscription': form.cleaned_data['subscription_uri'],
+        })
+        log.info('changed paymethod to {} for subscription {} belonging to '
+                 'user {}'.format(form.cleaned_data['new_pay_method_uri'],
+                                  form.cleaned_data['subscription_uri'],
+                                  request.user))
+        return Response({}, status=204)
+
+
+class CancelSubscription(APIView):
+
+    def post(self, request):
+        form = ManageSubscriptionForm(request.user, request.DATA)
+        if not form.is_valid():
+            return error_400(response=form.errors)
+
+        solitude.api().braintree.subscription.cancel.post({
+            'subscription': form.cleaned_data['subscription_uri'],
+        })
+        log.info('user {} cancelled subscription {}'.format(
+            request.user,
+            form.cleaned_data['subscription_uri'],
+        ))
+        return Response({}, status=204)
 
 
 class PlainTextRenderer(BaseRenderer):

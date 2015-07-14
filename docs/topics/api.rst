@@ -258,6 +258,20 @@ with a saved credit card, submit ``pay_method_uri``.
     :status 204: subscription changed successfully
 
 .. _`payment method`: https://solitude.readthedocs.org/en/latest/topics/braintree.html#id2
+
+.. http:post:: /api/braintree/subscriptions/cancel/
+
+    Cancel a `subscription`_. The subscription object must belong to the signed in user.
+
+    **Request**
+
+    :param string subscription_uri:
+        Solitude URI to the `subscription`_ you want to change.
+
+    **Response**
+
+    :status 204: subscription cancelled successfully
+
 .. _`subscription`: http://solitude.readthedocs.org/en/latest/topics/braintree.html#subscriptions
 
 Webhooks

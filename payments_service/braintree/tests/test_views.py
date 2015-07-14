@@ -332,18 +332,12 @@ class TestSubscribe(AuthenticatedTestCase):
         assert self.solitude.braintree.mozilla.subscription.get.called
 
 
-class TestChangeSubscriptionPayMethod(AuthenticatedTestCase):
+class SubscriptionTest(AuthenticatedTestCase):
 
     def setUp(self):
-        super(TestChangeSubscriptionPayMethod, self).setUp()
-        self.url = reverse('braintree:subscriptions.paymethod.change')
+        super(SubscriptionTest, self).setUp()
         self.new_pay_method_uri = '/new_pay_method_uri'
         self.subscription_uri = '/subscription_uri'
-
-    def setup_subscription_post(self):
-        bt = self.solitude.braintree
-        bt.subscription.paymethod.change.post.return_value = {}
-        return bt.subscription.paymethod.change.post
 
     def setup_uri_lookups(self, uri_404=None):
         resources = {
@@ -364,6 +358,18 @@ class TestChangeSubscriptionPayMethod(AuthenticatedTestCase):
         self.solitude.by_url.side_effect = get_api_object
         return resources
 
+
+class TestChangeSubscriptionPayMethod(SubscriptionTest):
+
+    def setUp(self):
+        super(TestChangeSubscriptionPayMethod, self).setUp()
+        self.url = reverse('braintree:subscriptions.paymethod.change')
+
+    def setup_subscription_post(self):
+        bt = self.solitude.braintree
+        bt.subscription.paymethod.change.post.return_value = {}
+        return bt.subscription.paymethod.change.post
+
     def post(self):
         return self.json(self.client.post(self.url, {
             'new_pay_method_uri': self.new_pay_method_uri,
@@ -380,42 +386,31 @@ class TestChangeSubscriptionPayMethod(AuthenticatedTestCase):
         eq_(api_post.call_args[0][0]['paymethod'], self.new_pay_method_uri)
         eq_(api_post.call_args[0][0]['subscription'], self.subscription_uri)
 
-    def test_look_up_paymethod_by_user(self):
-        res = self.setup_uri_lookups()[self.new_pay_method_uri]
-        self.setup_subscription_post()
 
-        self.post()
+class TestCancelSubscription(SubscriptionTest):
 
-        # api.by_url('/paymethod').get_object_or_404(...)
-        eq_(res.get_object_or_404.call_args[1]['braintree_buyer__buyer__uuid'],
-            self.buyer_uuid)
+    def setUp(self):
+        super(TestCancelSubscription, self).setUp()
+        self.url = reverse('braintree:subscriptions.cancel')
 
-    def test_look_up_subscription_by_user(self):
-        res = self.setup_uri_lookups()[self.subscription_uri]
-        self.setup_subscription_post()
+    def setup_subscription_post(self):
+        bt = self.solitude.braintree
+        bt.subscription.cancel.post.return_value = {}
+        return bt.subscription.cancel.post
 
-        self.post()
+    def post(self):
+        return self.json(self.client.post(self.url, {
+            'subscription_uri': self.subscription_uri,
+        }))
 
-        # api.by_url('/subscription').get_object_or_404(...)
-        get = res.get_object_or_404
-        eq_(get.call_args[1]['paymethod__braintree_buyer__buyer'],
-            self.buyer_pk)
-
-    def test_cannot_use_another_users_paymethod(self):
-        self.setup_uri_lookups(uri_404=self.new_pay_method_uri)
-        self.setup_subscription_post()
+    def test_change_paymethod(self):
+        self.setup_uri_lookups()
+        api_post = self.setup_subscription_post()
 
         res, data = self.post()
-        eq_(res.status_code, 400, res)
-        self.assert_form_error(res, ['new_pay_method_uri'])
+        eq_(res.status_code, 204, res)
 
-    def test_cannot_change_another_users_subscription(self):
-        self.setup_uri_lookups(uri_404=self.subscription_uri)
-        self.setup_subscription_post()
-
-        res, data = self.post()
-        eq_(res.status_code, 400, res)
-        self.assert_form_error(res, ['subscription_uri'])
+        eq_(api_post.call_args[0][0]['subscription'], self.subscription_uri)
 
 
 class TestWebhook(TestCase):

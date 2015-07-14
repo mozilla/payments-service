@@ -32,13 +32,12 @@ class SubscriptionForm(forms.Form):
                 'Either pay_method_nonce or pay_method_uri can be submitted')
 
 
-class ChangeSubscriptionPayMethodForm(forms.Form):
-    new_pay_method_uri = forms.CharField(max_length=255)
+class ManageSubscriptionForm(forms.Form):
     subscription_uri = forms.CharField(max_length=255)
 
     def __init__(self, user, *args, **kw):
         self.user = user
-        super(ChangeSubscriptionPayMethodForm, self).__init__(*args, **kw)
+        super(ManageSubscriptionForm, self).__init__(*args, **kw)
 
     def clean_subscription_uri(self):
         uri = self.cleaned_data['subscription_uri']
@@ -48,17 +47,6 @@ class ChangeSubscriptionPayMethodForm(forms.Form):
         ):
             raise forms.ValidationError(
                 'subscription by URI does not exist or belongs to another user'
-            )
-        return uri
-
-    def clean_new_pay_method_uri(self):
-        uri = self.cleaned_data['new_pay_method_uri']
-        if not self.user_owns_resource(
-            uri,
-            {'braintree_buyer__buyer__uuid': self.user.uuid},
-        ):
-            raise forms.ValidationError(
-                'paymethod by URI does not exist or belongs to another user'
             )
         return uri
 
@@ -73,3 +61,18 @@ class ChangeSubscriptionPayMethodForm(forms.Form):
             log.debug('{cls}: catching {e.__class__.__name__}: {e}'
                       .format(cls=self.__class__.__name__, e=exc))
             return False
+
+
+class ChangeSubscriptionPayMethodForm(ManageSubscriptionForm):
+    new_pay_method_uri = forms.CharField(max_length=255)
+
+    def clean_new_pay_method_uri(self):
+        uri = self.cleaned_data['new_pay_method_uri']
+        if not self.user_owns_resource(
+            uri,
+            {'braintree_buyer__buyer__uuid': self.user.uuid},
+        ):
+            raise forms.ValidationError(
+                'paymethod by URI does not exist or belongs to another user'
+            )
+        return uri
