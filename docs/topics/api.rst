@@ -266,7 +266,7 @@ with a saved credit card, submit ``pay_method_uri``.
     **Request**
 
     :param string subscription_uri:
-        Solitude URI to the `subscription`_ you want to change.
+        Solitude URI to the `subscription`_ you want to cancel.
 
     **Response**
 
