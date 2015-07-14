@@ -26,6 +26,7 @@ def post_transform(result):
     #  Missing token for production Choice(...
     # This fixes up the HTML after.
     result = result.replace('http://placeholder', '{{ product.img }}')
+    result = result.replace('__CC_TYPE__', '{{ cc_type|lower }}')
     return result
 
 
