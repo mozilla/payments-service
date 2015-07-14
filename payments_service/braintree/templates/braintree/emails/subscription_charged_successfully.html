@@ -11,13 +11,13 @@
         <tr class="cc">
             <th scope="row">Paid with</th>
             {# __CC_TYPE__ is post-process replaced #}
-            <td><img class="card" src="/svg/__CC_TYPE__.svg" width="40" /> ending in {{ cc_truncated_id }}</td>
+            <td><img class="card" alt="__CC_TYPE__" src="/svg/__CC_TYPE__.svg" width="40" /> ending in {{ cc_truncated_id }}</td>
         </tr>
         <tr class="desc">
             <th scope="row">{{ product.description }}</th>
             <td>${{ moz_trans.amount }} <span>per month</span></td>
         </tr>
-        <tr class="period" colspan="2">
+        <tr class="period">
             <th scope="row">Period</th>
             <td>{{ bill_start }} - {{ bill_end }}</td>
         </tr>

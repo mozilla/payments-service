@@ -26,14 +26,14 @@
 <th scope="row" style="padding:0.53em 0; padding-bottom:2em; text-align:left; white-space:nowrap" align="left">Paid with</th>
             {# {{ cc_type|lower }} is post-process replaced #}
             <td style="padding:0.53em 0; padding-bottom:2em; position:relative; text-align:right; white-space:nowrap" align="right">
-<img class="card" src="http://192.168.59.103:8000/svg/{{ cc_type|lower }}.svg" width="40" style="padding-right:5px; vertical-align:middle" valign="middle"> ending in {{ cc_truncated_id }}</td>
+<img class="card" alt="{{ cc_type|lower }}" src="http://192.168.59.103:8000/svg/{{ cc_type|lower }}.svg" width="40" style="padding-right:5px; vertical-align:middle" valign="middle"> ending in {{ cc_truncated_id }}</td>
         </tr>
 <tr class="desc">
 <th scope="row" style="padding:0.53em 0; text-align:left; vertical-align:top; white-space:nowrap" align="left" valign="top">{{ product.description }}</th>
             <td style="padding:0.53em 0; text-align:right; vertical-align:top; white-space:nowrap" align="right" valign="top">${{ moz_trans.amount }} <span style="display:block">per month</span>
 </td>
         </tr>
-<tr class="period" colspan="2">
+<tr class="period">
 <th scope="row" style="padding:0.53em 0; text-align:left; white-space:nowrap" align="left">Period</th>
             <td style="padding:0.53em 0; text-align:right; white-space:nowrap" align="right">{{ bill_start }} - {{ bill_end }}</td>
         </tr>
