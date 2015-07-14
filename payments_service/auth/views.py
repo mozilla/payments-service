@@ -7,7 +7,7 @@ from rest_framework.response import Response
 from slumber.exceptions import HttpClientError
 
 from .. import solitude
-from ..base.views import error_400, UnprotectedAPIView
+from ..base.views import APIView, error_400, UnprotectedAPIView
 from .forms import SignInForm
 
 log = logging.getLogger(__name__)
@@ -55,8 +55,10 @@ class SignInView(UnprotectedAPIView):
             # could theoretically handle changing email addresses.
             api.generic.buyer(buyer['resource_pk']).patch({'email': email})
 
-        request.session['buyer_pk'] = buyer['resource_pk']
-        request.session['buyer_uuid'] = buyer['uuid']
+        request.session['buyer'] = {
+            'pk': buyer['resource_pk'],
+            'uuid': buyer['uuid'],
+        }
 
         # As a convenience, put any saved payment methods in the response
         # if the user has them.
@@ -73,3 +75,11 @@ class SignInView(UnprotectedAPIView):
             'payment_methods': pay_methods,
             'csrf_token': csrf.get_token(request),
         }, status=201 if created else 200)
+
+
+class SignOutView(APIView):
+
+    def post(self, request):
+        log.info('signing out user: {}'.format(request.user))
+        del request.session['buyer']
+        return Response({}, status=204)

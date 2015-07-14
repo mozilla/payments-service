@@ -1,11 +1,14 @@
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.urlresolvers import reverse
+from django.test import RequestFactory
 
 import mock
 from nose.tools import eq_
 from slumber.exceptions import HttpClientError
 
+from payments_service.base.tests import AuthenticatedTestCase
 from . import AuthTest
+from .. import SessionUserAuthentication
 
 
 class SignInTest(AuthTest):
@@ -102,8 +105,9 @@ class TestSignInView(SignInTest):
 
         res, data = self.post()
         eq_(res.status_code, 200, res)
-        eq_(self.client.session.get('buyer_uuid'), data['buyer_uuid'])
-        eq_(self.client.session.get('buyer_pk'), data['buyer_pk'])
+        buyer = self.client.session.get('buyer')
+        eq_(buyer['uuid'], data['buyer_uuid'])
+        eq_(buyer['pk'], data['buyer_pk'])
 
     def test_bad_solitude_response(self):
         err = HttpClientError('Bad Request')
@@ -116,6 +120,20 @@ class TestSignInView(SignInTest):
         self.set_solitude_buyer_getter()
         res, data = self.post()
         assert 'csrf_token' in data, 'Unexpected: {}'.format(data)
+
+
+class TestSignOut(AuthenticatedTestCase):
+
+    def test_sign_out(self):
+        res = self.client.post(reverse('auth:sign-out'))
+        eq_(res.status_code, 204, res)
+
+        request = RequestFactory().get('/')
+        request.session = self.client.session
+
+        # Make sure the middleware now thinks they are signed out.
+        user, auth = SessionUserAuthentication().authenticate(request)
+        eq_(user, None)
 
 
 class TestPayMethodsOnSignIn(SignInTest):

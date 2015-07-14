@@ -90,6 +90,9 @@ These endpoints deal with user authentication and authorization.
 Sign-In
 ~~~~~~~
 
+Authenticates the user and saves state to a session cookie (delivered in the
+response).
+
 .. http:post:: /api/auth/sign-in/
 
     **Request**
@@ -120,6 +123,15 @@ Sign-In
 .. _`Solitude payment method`: https://solitude.readthedocs.org/en/latest/topics/braintree.html#get--braintree-mozilla-paymethod--method%20id--
 .. _`Django CSRF`: https://docs.djangoproject.com/en/1.8/ref/csrf/
 .. _`Firefox Accounts`: https://wiki.mozilla.org/Identity/Firefox_Accounts
+
+Sign-Out
+~~~~~~~~
+
+Destroys the signed-in user's session.
+
+.. http:post:: /api/auth/sign-out/
+
+    :status 204: user signed out successfully.
 
 Braintree
 =========
