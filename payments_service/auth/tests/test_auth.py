@@ -26,7 +26,7 @@ class TestSessionUserAuth(TestCase):
     def test_auth_with_buyer_uuid(self):
         uuid = 'some-uuid'
         pk = 1
-        user, auth = self.authenticate(buyer_uuid=uuid, buyer_pk=pk)
+        user, auth = self.authenticate(buyer={'uuid': uuid, 'pk': pk})
         eq_(user.uuid, uuid)
         eq_(user.pk, pk)
         eq_(user.id, pk)
@@ -58,7 +58,7 @@ class TestDefaultViewProtection(TestCase, WithDynamicEndpoints):
         return self.request('post', *args, **kw)
 
     def login(self, **extra_session):
-        self.prepare_session(buyer_uuid='some-uuid', buyer_pk=1,
+        self.prepare_session(buyer={'uuid': 'some-uuid', 'pk': 1},
                              **extra_session)
 
     def test_view_access_denied(self):

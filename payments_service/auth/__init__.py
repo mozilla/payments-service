@@ -45,13 +45,13 @@ class SessionUserAuthentication(authentication.SessionAuthentication):
     """
 
     def authenticate(self, request):
-        if not request.session.get('buyer_uuid'):
-            log.debug('auth failed: buyer_uuid not in session')
+        if not request.session.get('buyer'):
+            log.debug('auth failed: buyer not in session')
             user = None
         else:
-            log.debug('auth success: buyer_uuid in session')
-            user = SolitudeBuyer(request.session['buyer_uuid'],
-                                 request.session['buyer_pk'])
+            log.debug('auth success: buyer in session')
+            user = SolitudeBuyer(request.session['buyer']['uuid'],
+                                 request.session['buyer']['pk'])
 
         self.enforce_csrf(request)
 
