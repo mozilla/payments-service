@@ -218,6 +218,14 @@ SOLITUDE_SECRET = 'please change this'
 # https://github.com/mozilla/fxa-oauth-server/
 FXA_OAUTH_URL = 'https://oauth-stable.dev.lcip.org'
 
+# Management app credentials tied to http://pay.dev:8000,
+# just for development.
+# https://oauth-stable.dev.lcip.org/console/client/8d7c6c8549cc6deb
+FXA_CLIENT_ID = '8d7c6c8549cc6deb'
+FXA_CLIENT_SECRET = (
+    'b18c1a8d6797f00b88d5da1df57ae01c0c3cc2ed5309e8112bccae03d59e4286'
+)
+
 # When emailing buyers about their subscriptions, this
 # will be the reply-to address. If a buyer replies to
 # the email it will go to this address.

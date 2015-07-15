@@ -16,7 +16,7 @@ class SignInTest(AuthTest):
     def setUp(self):
         super(SignInTest, self).setUp()
         self.url = reverse('auth:sign-in')
-        self.set_fxa_response()
+        self.set_fxa_verify_response()
 
     def post(self, data=None):
         if data is None:
@@ -47,10 +47,6 @@ class TestSignInView(SignInTest):
         super(TestSignInView, self).setUp()
         self.set_no_payment_methods_yet()
 
-    def test_form_error(self):
-        res, data = self.post(data={})
-        self.assert_form_error(res, fields=['access_token'])
-
     def test_return_buyer_ids(self):
         buyer = self.set_solitude_buyer_getter()
 
@@ -58,6 +54,16 @@ class TestSignInView(SignInTest):
         eq_(res.status_code, 200, res)
         eq_(data['buyer_uuid'], buyer['uuid'])
         eq_(data['buyer_pk'], buyer['resource_pk'])
+
+    def test_create_buyer_after_authorization(self):
+        self.set_fxa_token_response()
+        buyer = self.set_solitude_buyer_getter()
+
+        res, data = self.post(data={
+            'authorization_code': 'some-fxa-auth-code'
+        })
+        eq_(res.status_code, 200, res)
+        eq_(data['buyer_uuid'], buyer['uuid'])
 
     def test_return_buyer_email(self):
         self.set_solitude_buyer_getter()

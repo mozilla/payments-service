@@ -91,17 +91,25 @@ Sign-In
 ~~~~~~~
 
 Authenticates the user and saves state to a session cookie (delivered in the
-response).
+response). You can sign in either with an `authorization code`_ or an
+`access token`_, as explained below. If you sign in with an
+`authorization code`_, it will be exchanged for an `access token`_
+which will then be verified.
+The access token derived from any sign-in method must be scoped for
+**payments** and **profile:email** otherwise the sign-in will fail.
 
 .. http:post:: /api/auth/sign-in/
 
     **Request**
 
+    :param string authorization_code:
+        An internally created `Firefox Accounts`_ OAuth `authorization code`_.
+        This would typically be generated using an internal client ID from
+        a login screen on the payments management app.
     :param string access_token:
-        `Firefox Accounts`_ OAuth `access token`_. This would typically be
-        generated from an initial sign-in flow triggered by the app that
-        wishes to sell a product. The token must be scoped for **payments**
-        otherwise you will receive an error response.
+        A third party generated `Firefox Accounts`_ OAuth `access token`_.
+        This would typically be generated from an initial sign-in flow
+        triggered by an external app that is selling the product.
 
     :>json string buyer_uuid: `Solitude buyer`_ uuid identifier
     :>json string buyer_pk: `Solitude buyer`_ pk identifier
@@ -119,6 +127,7 @@ response).
     :status 201: first time buyer authenticated successfully.
 
 .. _`access token`: https://github.com/mozilla/fxa-oauth-server/blob/master/docs/api.md#post-v1token
+.. _`authorization code`: https://github.com/mozilla/fxa-oauth-server/blob/master/docs/api.md#post-v1authorization
 .. _`Solitude buyer`: https://solitude.readthedocs.org/en/latest/topics/generic.html#buyers
 .. _`Solitude payment method`: https://solitude.readthedocs.org/en/latest/topics/braintree.html#get--braintree-mozilla-paymethod--method%20id--
 .. _`Django CSRF`: https://docs.djangoproject.com/en/1.8/ref/csrf/
