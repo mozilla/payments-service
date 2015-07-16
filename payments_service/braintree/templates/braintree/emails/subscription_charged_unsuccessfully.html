@@ -1,14 +1,9 @@
 {# subscription header is added automatically here #}
-    <div class="padded">
+
+    <div class="main">
+        <div class="banner error">Subscription charge failed</div>
+
         <table>
-            <tr>
-                <th scope="row">Date</th>
-                <td>{{ date }}</td>
-            </tr>
-            <tr>
-                <th scope="row">Receipt #</th>
-                <td>{{ transaction.uuid }}</td>
-            </tr>
             <tr class="cc">
                 <th scope="row">Paid with</th>
                 {# __CC_TYPE__ is post-process replaced #}
@@ -31,13 +26,11 @@
                 <th scope="row">Total</th>
                 <td>${{ moz_trans.amount }}</td>
             </tr>
-            <tr class="next-payment">
-                <th scope="row">Next payment</th>
-                <td>{{ next_pay_date }}</td>
-            </tr>
         </table>
+    </div>
 
-        <a class="terms" href="#">Terms and conditions</a>
+    <div class="footer">
+        <a class="button" data-href="__MANAGEMENT_URL__">Use different credit card</a>
     </div>
 
 {# subscription footer is added automatically here #}

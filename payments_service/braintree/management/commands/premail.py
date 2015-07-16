@@ -18,6 +18,7 @@ header_file = join('subscription_header.html')
 footer_file = join('subscription_footer.html')
 files = [
     join('subscription_charged_successfully.html'),
+    join('subscription_charged_unsuccessfully.html'),
 ]
 
 
@@ -25,8 +26,15 @@ def post_transform(result):
     # Using {{ }} in a url(..) triggers error in cssutils:
     #  Missing token for production Choice(...
     # This fixes up the HTML after.
-    result = result.replace('http://placeholder', '{{ product.img }}')
+    # This is becoming a mess and I'm grumpy about this.
+    #
+    # See: https://github.com/mozilla/payments-service/issues/111
+    # And: https://github.com/mozilla/payments-service/issues/110
+    result = result.replace('http://pay.dev/email-placeholder',
+                            '{{ product.img }}')
     result = result.replace('__CC_TYPE__', '{{ cc_type|lower }}')
+    result = result.replace('data-href="__MANAGEMENT_URL__"',
+                            'href="{{ management_url }}"')
     return result
 
 
