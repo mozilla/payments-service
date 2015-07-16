@@ -330,7 +330,8 @@ class Webhook(UnprotectedAPIView):
         # Temporary, filter.
         if notice_kind in [
                 'subscription_charged_successfully',
-                'subscription_charged_unsuccessfully']:
+                'subscription_charged_unsuccessfully',
+                'subscription_canceled']:
             mail.attach_alternative(
                 self.render_html(data, notice_kind, 'stored'),
                 'text/html')
