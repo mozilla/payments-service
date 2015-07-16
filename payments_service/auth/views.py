@@ -21,8 +21,8 @@ class SignInView(UnprotectedAPIView):
         if not form.is_valid():
             return error_400(response=form.errors)
 
-        fxa_uuid = u'fxa:{a[user]}'.format(a=form.cleaned_data['access_token'])
-        email = form.cleaned_data['access_token']['email']
+        fxa_uuid = u'fxa:{}'.format(form.fxa_user_id)
+        email = form.fxa_email
 
         api = solitude.api()
         created = False
