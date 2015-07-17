@@ -1,6 +1,6 @@
 {% extends 'braintree/emails/subscription_base.txt' %}
 
-{% block info %}
+{% block main %}
 Receipt #     {{ transaction.uuid }}
 Paid with     {{ cc_type }} ending in {{ cc_truncated_id }}
 Product       {{ product.description }}

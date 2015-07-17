@@ -1,6 +1,6 @@
 {% extends 'braintree/emails/subscription_base.txt' %}
 
-{% block info %}
+{% block main %}
 Paid with     {{ cc_type }} ending in {{ cc_truncated_id }}
 Product       {{ product.description }}
 Amount        ${{ moz_trans.amount }}
