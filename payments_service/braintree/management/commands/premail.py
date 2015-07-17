@@ -19,6 +19,7 @@ footer_file = join('subscription_footer.html')
 files = [
     join('subscription_charged_successfully.html'),
     join('subscription_charged_unsuccessfully.html'),
+    join('subscription_canceled.html'),
 ]
 
 

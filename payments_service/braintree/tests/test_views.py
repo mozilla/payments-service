@@ -532,6 +532,19 @@ class TestWebhook(TestCase):
         assert 'Amount        $10.00' in msg, 'Unexpected: {}'.format(msg)
         assert 'TOTAL' not in msg, 'Unexpected: {}'.format(msg)
 
+    def test_html_for_subscription_canceled(self):
+        notice = subscription_notice(
+            kind='subscription_canceled'
+        )
+        self.solitude.braintree.webhook.post.return_value = notice
+        response = self.post()
+        email = mail.outbox[0]
+        eq_(email.alternatives[0][1], 'text/html')
+        self.assertTemplateUsed(
+            response,
+            'braintree/emails/'
+            'subscription_canceled.premailed.html')
+
     def test_ignore_inactionable_webhook(self):
         # Solitude returns a 204 when we do not need to act on the webhook.
         self.solitude.braintree.webhook.post.return_value = ''

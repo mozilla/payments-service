@@ -1,14 +1,9 @@
 {# subscription header is added automatically here #}
+
     <div class="main">
+        <div class="banner disabled">Subscription cancelled</div>
+
         <table>
-            <tr>
-                <th scope="row">Date</th>
-                <td>{{ date }}</td>
-            </tr>
-            <tr>
-                <th scope="row">Receipt #</th>
-                <td>{{ transaction.uuid }}</td>
-            </tr>
             <tr class="cc">
                 <th scope="row">Paid with</th>
                 {# __CC_TYPE__ is post-process replaced #}
@@ -17,10 +12,6 @@
             <tr class="desc">
                 <th scope="row">{{ product.description }}</th>
                 <td>${{ moz_trans.amount }} <span>per month</span></td>
-            </tr>
-            <tr class="period">
-                <th scope="row">Period</th>
-                <td>{{ bill_start }} - {{ bill_end }}</td>
             </tr>
         </table>
 
@@ -31,13 +22,14 @@
                 <th scope="row">Total</th>
                 <td>${{ moz_trans.amount }}</td>
             </tr>
-            <tr class="next-payment">
-                <th scope="row">Next payment</th>
-                <td>{{ next_pay_date }}</td>
+            <tr>
+                <th>Active until</th>
+                <td>{{ bill_end }}</td>
             </tr>
         </table>
-
-        <a class="terms" href="#">Terms and conditions</a>
     </div>
 
+    <div class="footer">
+        <p>You will not be billed again.</p>
+    </div>
 {# subscription footer is added automatically here #}
