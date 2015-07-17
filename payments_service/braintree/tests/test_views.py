@@ -62,7 +62,7 @@ def subscription_notice(kind='subscription_charged_successfully'):
                     "id": 1,
                     "billing_period_end_date": "2015-07-10T13:20:14.591",
                     "billing_period_start_date": "2015-06-11T13:20:14.591",
-                    "kind": "subscription_charged_successfully",
+                    "kind": kind,
                     "next_billing_date": "2015-07-11T13:20:14.591",
                     "next_billing_period_amount": "10"
                 }
@@ -504,8 +504,10 @@ class TestWebhook(TestCase):
         )
         assert 'TOTAL: $10.00' in msg, 'Unexpected: {}'.format(msg)
 
-    def test_html_for_subscription_charge(self):
-        notice = subscription_notice()
+    def test_html_for_subscription_charge_failure(self):
+        notice = subscription_notice(
+            kind='subscription_charged_unsuccessfully'
+        )
         self.solitude.braintree.webhook.post.return_value = notice
         response = self.post()
         email = mail.outbox[0]
@@ -513,7 +515,7 @@ class TestWebhook(TestCase):
         self.assertTemplateUsed(
             response,
             'braintree/emails/'
-            'subscription_charged_successfully.premailed.html')
+            'subscription_charged_unsuccessfully.premailed.html')
 
     def test_email_for_subscription_canceled(self):
         notice = subscription_notice(

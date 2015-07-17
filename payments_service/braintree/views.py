@@ -259,8 +259,9 @@ class Webhook(UnprotectedAPIView):
             'cc_truncated_id': paymethod['truncated_id'],
             'cc_type': paymethod['type_name'],
             'date': parsed_date(moz_trans['created']),
-            'next_pay_date': parsed_date(bt_trans['next_billing_date']),
+            'management_url': settings.MANAGEMENT_URL,
             'moz_trans': moz_trans,
+            'next_pay_date': parsed_date(bt_trans['next_billing_date']),
             'product': product,
             'seller': product.seller,
             'transaction': moz_trans,
@@ -326,9 +327,10 @@ class Webhook(UnprotectedAPIView):
             reply_to=[settings.SUBSCRIPTION_REPLY_TO_EMAIL],
             connection=connection)
 
-        # Temporary, only subscription_charged_successfully has been converted
-        # so far.
-        if notice_kind == 'subscription_charged_successfully':
+        # Temporary, filter.
+        if notice_kind in [
+                'subscription_charged_successfully',
+                'subscription_charged_unsuccessfully']:
             mail.attach_alternative(
                 self.render_html(data, notice_kind, 'stored'),
                 'text/html')
@@ -352,7 +354,7 @@ def debug_email(request):
         raise IndexError(
             'No latest transaction found, ensure you buy a subscription and '
             'complete a webhook from braintree (or use the braintree_webhook '
-            'command)'
+            'command).'
         )
     moz = api.by_url(bt['transaction']).get()
     method = api.by_url(bt['paymethod']).get()

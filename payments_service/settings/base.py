@@ -234,3 +234,5 @@ SUBSCRIPTION_REPLY_TO_EMAIL = 'payments-support@mozilla.com'
 # When emailing buyers about their subscriptions, this
 # will be the sender address. Bounces will be sent here.
 SUBSCRIPTION_FROM_EMAIL = 'no-reply@mozilla.com'
+
+MANAGEMENT_URL = 'http://pay.dev:8000/management.html'
