@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, user-scalable=no, initial-scale=1, maximum-scale=1">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <link rel="stylesheet" href="{{ EMAIL_URL_ROOT }}/dist/email.css">
+    <title>Payments UI</title>
+  </head>
+  <body id="email">
+    <main>
+      <div id="wrapper">
+        <div class="header">
+          <div id="logo" style="background-image: url({{ product.img }});"></div>
+          <h1>{{ seller.name.en }}</h1>
+          <p class="user-email">{{ seller.email }}</p>
+        </div>
+        <div class="main">
+          {% block main %}
+          {% endblock %}
+        </div>
+        <div class="footer footer-{{ kind }}">
+          {% block footer %}
+          {% endblock %}
+        <div>
+      </div>
+    </main>
+  </body>
+</html>

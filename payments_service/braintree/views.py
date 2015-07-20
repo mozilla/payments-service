@@ -4,17 +4,17 @@ from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.mail import EmailMultiAlternatives, get_connection
 from django.http import HttpResponse
-from django.template import Context, Template
+from django.template import Context
 from django.template.loader import get_template
 
 from dateutil.parser import parse as parse_date
 from payments_config import products
+from premailer import Premailer
 from rest_framework.views import APIView
 from rest_framework.renderers import BaseRenderer
 from rest_framework.response import Response
 from slumber.exceptions import HttpClientError
 
-from payments_service.braintree.management.commands.premail import get_email
 from .. import solitude
 from ..base.views import error_400, error_403, UnprotectedAPIView
 from ..solitude import SolitudeBodyguard
@@ -34,6 +34,24 @@ class TokenGenerator(SolitudeBodyguard):
     """
     methods = ['post']
     resource = 'braintree.token.generate'
+
+
+def premail(source):
+    p = Premailer(
+        html=source,
+        preserve_internal_links=True,
+        exclude_pseudoclasses=False,
+        keep_style_tags=False,
+        include_star_selectors=True,
+        remove_classes=False,
+        strip_important=False,
+        method='html',
+        base_path=settings.EMAIL_URL_ROOT,
+        base_url=settings.EMAIL_URL_ROOT,
+        disable_basic_attributes=[],
+        disable_validation=True
+    )
+    return p.transform(pretty_print=True)
 
 
 class PayMethod(SolitudeBodyguard):
@@ -252,17 +270,19 @@ class Webhook(UnprotectedAPIView):
 
         return Response(result, status=status)
 
-    def build_context(self, bt_trans, moz_trans, paymethod, product):
+    def build_context(self, bt_trans, moz_trans, paymethod, product, kind):
         return {
             'bill_start': parsed_date(bt_trans['billing_period_start_date']),
             'bill_end': parsed_date(bt_trans['billing_period_end_date']),
             'cc_truncated_id': paymethod['truncated_id'],
             'cc_type': paymethod['type_name'],
             'date': parsed_date(moz_trans['created']),
+            'kind': kind,
             'management_url': settings.MANAGEMENT_URL,
             'moz_trans': moz_trans,
             'next_pay_date': parsed_date(bt_trans['next_billing_date']),
             'product': product,
+            'root_url': settings.EMAIL_URL_ROOT,
             'seller': product.seller,
             'transaction': moz_trans,
         }
@@ -272,12 +292,11 @@ class Webhook(UnprotectedAPIView):
         return template.render(Context(data))
 
     def render_html(self, data, kind, premailed):
-        if premailed == 'stored':
-            template = get_template(
-                'braintree/emails/{}.premailed.html'.format(kind))
-        else:
-            template = Template(get_email(kind + '.html', premailed))
-        return template.render(Context(data))
+        template = get_template('braintree/emails/{}.html'.format(kind))
+        response = template.render(Context(data))
+        if premailed:
+            response = premail(response)
+        return response
 
     def notify_buyer(self, result):
         log.debug('about to handle webhook: {s}'
@@ -316,7 +335,8 @@ class Webhook(UnprotectedAPIView):
             )
 
         data = self.build_context(
-            bt_trans, moz_trans, result['mozilla']['paymethod'], product)
+            bt_trans, moz_trans, result['mozilla']['paymethod'], product,
+            notice_kind)
         connection = get_connection(fail_silently=False)
 
         mail = EmailMultiAlternatives(
@@ -327,13 +347,12 @@ class Webhook(UnprotectedAPIView):
             reply_to=[settings.SUBSCRIPTION_REPLY_TO_EMAIL],
             connection=connection)
 
-        # Temporary, filter.
         if notice_kind in [
                 'subscription_charged_successfully',
                 'subscription_charged_unsuccessfully',
                 'subscription_canceled']:
             mail.attach_alternative(
-                self.render_html(data, notice_kind, 'stored'),
+                self.render_html(data, notice_kind, True),
                 'text/html')
         mail.send()
 
@@ -343,7 +362,7 @@ def debug_email(request):
         return error_403('Only available in debug mode.')
 
     kind = request.GET.get('kind', 'subscription_charged_successfully')
-    premailed = 'regenerate' if bool(request.GET.get('premailed', 0)) else 'no'
+    premailed = bool(request.GET.get('premailed', 0))
     log.info('Generating email with pre-mailed setting: {}'.format(premailed))
     webhook = Webhook()
     api = solitude.api()
@@ -362,7 +381,7 @@ def debug_email(request):
     product = products[api.by_url(moz['seller_product']).get()['public_id']]
 
     # Render the HTML.
-    data = webhook.build_context(bt, moz, method, product)
+    data = webhook.build_context(bt, moz, method, product, kind)
     response = webhook.render_html(data, kind, premailed)
 
     return HttpResponse(response, status=200)

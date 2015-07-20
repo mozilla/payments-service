@@ -3,7 +3,7 @@
 
 Date          {{ date }}
 {% spaceless %}
-{% block info %}
+{% block main %}
 {% endblock %}
 {% endspaceless %}
 

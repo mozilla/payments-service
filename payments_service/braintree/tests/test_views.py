@@ -5,7 +5,6 @@ from django.conf import settings
 from django.core import mail
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.urlresolvers import reverse
-from django.template.base import StringOrigin
 from django.test import override_settings, RequestFactory
 
 import mock
@@ -339,6 +338,11 @@ class SubscriptionTest(AuthenticatedTestCase):
         self.new_pay_method_uri = '/new_pay_method_uri'
         self.subscription_uri = '/subscription_uri'
 
+        p = mock.patch('payments_service.braintree.views.premail',
+                       autospec=True)
+        self.premail = p.start()
+        self.addCleanup(p.stop)
+
     def setup_uri_lookups(self, uri_404=None):
         resources = {
             self.subscription_uri: mock.Mock(),
@@ -413,7 +417,7 @@ class TestCancelSubscription(SubscriptionTest):
         eq_(api_post.call_args[0][0]['subscription'], self.subscription_uri)
 
 
-class TestWebhook(TestCase):
+class TestWebhook(SubscriptionTest):
 
     def get(self, **params):
         params.setdefault('bt_challenge', 'challenge-code')
@@ -515,7 +519,7 @@ class TestWebhook(TestCase):
         self.assertTemplateUsed(
             response,
             'braintree/emails/'
-            'subscription_charged_unsuccessfully.premailed.html')
+            'subscription_charged_unsuccessfully.html')
 
     def test_email_for_subscription_canceled(self):
         notice = subscription_notice(
@@ -543,7 +547,7 @@ class TestWebhook(TestCase):
         self.assertTemplateUsed(
             response,
             'braintree/emails/'
-            'subscription_canceled.premailed.html')
+            'subscription_canceled.html')
 
     def test_ignore_inactionable_webhook(self):
         # Solitude returns a 204 when we do not need to act on the webhook.
@@ -584,7 +588,5 @@ class TestDebug(TestCase):
     def test_string_template(self):
         res = self.client.get(self.url)
         eq_(res.status_code, 200)
-        # The debug page compiles the premailed html and runs
-        # it through the Template parser.
-        eq_(len(res.templates), 1)
-        assert isinstance(res.templates[0].origin, StringOrigin)
+        self.assertTemplateUsed(
+            res, 'braintree/emails/subscription_charged_successfully.html')

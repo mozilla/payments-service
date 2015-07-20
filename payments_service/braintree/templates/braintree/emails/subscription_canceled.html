@@ -1,35 +1,32 @@
-{# subscription header is added automatically here #}
+{% extends 'braintree/emails/subscription_base.html' %}
+{% block info %}
+    <div class="banner disabled">Subscription cancelled</div>
 
-    <div class="main">
-        <div class="banner disabled">Subscription cancelled</div>
+    <table>
+        <tr class="cc">
+            <th scope="row">Paid with</th>
+            <td><img class="card" alt="{{ cc_type|lower }}" src="/svg/{{ cc_type|lower }}.svg" width="40" /> ending in {{ cc_truncated_id }}</td>
+        </tr>
+        <tr class="desc">
+            <th scope="row">{{ product.description }}</th>
+            <td>${{ moz_trans.amount }} <span>per month</span></td>
+        </tr>
+    </table>
 
-        <table>
-            <tr class="cc">
-                <th scope="row">Paid with</th>
-                {# __CC_TYPE__ is post-process replaced #}
-                <td><img class="card" alt="__CC_TYPE__" src="/svg/__CC_TYPE__.svg" width="40" /> ending in {{ cc_truncated_id }}</td>
-            </tr>
-            <tr class="desc">
-                <th scope="row">{{ product.description }}</th>
-                <td>${{ moz_trans.amount }} <span>per month</span></td>
-            </tr>
-        </table>
+    <div class="divider"></div>
 
-        <div class="divider"></div>
+    <table class="total-amount">
+        <tr class="total">
+            <th scope="row">Total</th>
+            <td>${{ moz_trans.amount }}</td>
+        </tr>
+        <tr>
+            <th>Active until</th>
+            <td>{{ bill_end }}</td>
+        </tr>
+    </table>
+{% endblock %}
 
-        <table class="total-amount">
-            <tr class="total">
-                <th scope="row">Total</th>
-                <td>${{ moz_trans.amount }}</td>
-            </tr>
-            <tr>
-                <th>Active until</th>
-                <td>{{ bill_end }}</td>
-            </tr>
-        </table>
-    </div>
-
-    <div class="footer">
-        <p>You will not be billed again.</p>
-    </div>
-{# subscription footer is added automatically here #}
+{% block footer %}
+    <p>You will not be billed again.</p>
+{% endblock %}
