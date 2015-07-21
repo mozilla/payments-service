@@ -55,6 +55,9 @@ SESSION_COOKIE_HTTPONLY = True
 
 SESSION_COOKIE_NAME = 'payservice_sess'
 
+# Development-only keys:
+ENCRYPTED_COOKIE_KEYS = ['LRwAWceOx89-jbxueXmBBfLDvbJg96RzZwZR0MGOJEE=']
+
 COMPRESS_ENCRYPTED_COOKIE = True
 
 ROOT_URLCONF = 'payments_service.urls'

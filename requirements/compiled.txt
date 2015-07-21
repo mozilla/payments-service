@@ -1,9 +1,15 @@
-# pyrepo (for docker and fabfile)
-# sha256: GgH9vZMrh5fOLSq3tfsLLLsLZqizC1qbEOPiOzhd4GM
-# pyrepo/travis (for travis)
-# sha256: eSnjUWPzFnUf4tM90UBXKeP6cJ-U_BopmJ7-gnFwXzk
-M2Crypto==0.22.3
-
 # sha256: oIuB2YqxQaiZUzrqRIfyssGDGp9Y520QPKtb_hRkBbM
 # sha256: bOShGrSFpnqJmqPggMl7IqnfQMcHe9kUaoIdOHLPIDc
 lxml==3.4.3
+
+# wheel:
+# sha256: Ho8QaighbtjiOdQp5vKa1leYzIUdW4AMNI5yd5By-2A
+# source:
+# sha256: OQlwtgJwjJHdxzlTu2kp5WKRwYpNgPNgr6APrYtvMzk
+cffi==1.1.2
+
+# wheel:
+# sha256: wHTCIXlUFoXo9uZu8doJJalUdPtgflOdOCeVV-88zP0
+# source:
+# sha256: rtAi9zjdmtuEDZKWCwRk6h-7IiuhGJOIWOuT_iUVHC0
+cryptography==0.9.3
