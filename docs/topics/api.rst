@@ -233,13 +233,23 @@ to inactive:
 Subscriptions
 ~~~~~~~~~~~~~
 
-This endpoint allows you to work with Braintree plan subscriptions.
-To pay using a new credit card, submit ``pay_method_nonce``. To pay
-with a saved credit card, submit ``pay_method_uri``.
+These endpoints allow you to work with Braintree plan subscriptions.
+
+.. http:get:: /api/braintree/subscriptions/
+
+    Get all active subscriptions for the currently signed in user.
+
+    :>json array objects: array of `solitude subscriptions`_
+
+    :status 200: subscriptions returned successfully
+
+.. _`solitude subscriptions`: http://solitude.readthedocs.org/en/latest/topics/braintree.html#get--braintree-mozilla-subscription--subscription%20id--
 
 .. http:post:: /api/braintree/subscriptions/
 
     Create a new buyer subscription.
+    To pay using a new credit card, submit ``pay_method_nonce``. To pay
+    with a saved credit card, submit ``pay_method_uri``.
 
     **Request**
 
