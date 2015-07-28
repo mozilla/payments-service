@@ -115,6 +115,13 @@ class Subscriptions(APIView):
         super(Subscriptions, self).__init__(*args, **kw)
         self.api = solitude.api()
 
+    def get(self, request):
+        objects = self.api.braintree.mozilla.subscription.get(
+            active=True,
+            paymethod__braintree_buyer__buyer=self.request.user.pk,
+        )
+        return Response({'objects': objects}, status=200)
+
     def post(self, request):
         form = SubscriptionForm(request.DATA)
         if not form.is_valid():

@@ -8,11 +8,22 @@ from django.core.urlresolvers import reverse
 from django.test import override_settings, RequestFactory
 
 import mock
-from nose.tools import eq_
+from nose.tools import eq_, raises
 from slumber.exceptions import HttpClientError
 
 from payments_service.braintree.views import PayMethod
 from payments_service.base.tests import AuthenticatedTestCase, TestCase
+
+
+def subscription():
+    return {
+        "resource_pk": 1,
+        "resource_uri": "/braintree/mozilla/subscription/1/",
+        "paymethod": "/braintree/mozilla/paymethod/1/",
+        "seller_product": "/generic/product/1/",
+        "id": 1,
+        "provider_id": "some-bt:id"
+    }
 
 
 def subscription_notice(kind='subscription_charged_successfully'):
@@ -66,14 +77,7 @@ def subscription_notice(kind='subscription_charged_successfully'):
                     "next_billing_period_amount": "10"
                 }
             },
-            "subscription": {
-                "resource_pk": 1,
-                "resource_uri": "/braintree/mozilla/subscription/1/",
-                "paymethod": "/braintree/mozilla/paymethod/1/",
-                "seller_product": "/generic/product/1/",
-                "id": 1,
-                "provider_id": "some-bt:id"
-            },
+            "subscription": subscription(),
             "product": {
                 "seller": "/generic/seller/19/",
                 "resource_uri": "/generic/product/18/",
@@ -361,6 +365,49 @@ class SubscriptionTest(AuthenticatedTestCase):
 
         self.solitude.by_url.side_effect = get_api_object
         return resources
+
+
+class TestGetSubscriptions(AuthenticatedTestCase):
+
+    def setUp(self):
+        super(TestGetSubscriptions, self).setUp()
+        self.subscription_obj = subscription()
+
+        bt = self.solitude.braintree
+        bt.mozilla.subscription.get.return_value = [self.subscription_obj]
+
+    def get(self):
+        return self.json(
+            self.client.get(reverse('braintree:subscriptions'))
+        )
+
+    def test_return_objects(self):
+        response, data = self.get()
+
+        eq_(data['objects'][0]['resource_uri'],
+            self.subscription_obj['resource_uri'])
+        eq_(response.status_code, 200)
+
+    def test_only_get_user_subscriptions(self):
+        self.get()
+
+        get = self.solitude.braintree.mozilla.subscription.get
+        eq_(get.call_args[1]['paymethod__braintree_buyer__buyer'],
+            self.buyer_pk)
+
+    def test_only_get_active_subscriptions(self):
+        self.get()
+
+        get = self.solitude.braintree.mozilla.subscription.get
+        eq_(get.call_args[1]['active'], True)
+
+    @raises(HttpClientError)
+    def test_bad_solitude_response(self):
+        get = self.solitude.braintree.mozilla.subscription.get
+        get.side_effect = HttpClientError
+        # Since we're not accepting user input, a solitude 400 should
+        # raise an exception.
+        self.get()
 
 
 class TestChangeSubscriptionPayMethod(SubscriptionTest):
