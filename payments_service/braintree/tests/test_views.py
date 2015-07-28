@@ -381,10 +381,10 @@ class TestGetSubscriptions(AuthenticatedTestCase):
             self.client.get(reverse('braintree:subscriptions'))
         )
 
-    def test_return_objects(self):
+    def test_return_subscriptions(self):
         response, data = self.get()
 
-        eq_(data['objects'][0]['resource_uri'],
+        eq_(data['subscriptions'][0]['resource_uri'],
             self.subscription_obj['resource_uri'])
         eq_(response.status_code, 200)
 

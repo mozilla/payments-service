@@ -120,7 +120,7 @@ class Subscriptions(APIView):
             active=True,
             paymethod__braintree_buyer__buyer=self.request.user.pk,
         )
-        return Response({'objects': objects}, status=200)
+        return Response({'subscriptions': objects}, status=200)
 
     def post(self, request):
         form = SubscriptionForm(request.DATA)

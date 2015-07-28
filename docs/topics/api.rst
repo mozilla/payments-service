@@ -239,7 +239,7 @@ These endpoints allow you to work with Braintree plan subscriptions.
 
     Get all active subscriptions for the currently signed in user.
 
-    :>json array objects: array of `solitude subscriptions`_
+    :>json array subscriptions: array of `solitude subscriptions`_
 
     :status 200: subscriptions returned successfully
 
