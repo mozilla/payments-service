@@ -26,6 +26,16 @@ def subscription():
     }
 
 
+def seller_product():
+    return {
+        "seller": "/generic/seller/19/",
+        "resource_uri": "/generic/product/18/",
+        "resource_pk": 18,
+        "public_id": "mozilla-concrete-brick",
+        "external_id": "mozilla-concrete-brick"
+    }
+
+
 def subscription_notice(kind='subscription_charged_successfully'):
     return {
         "mozilla": {
@@ -78,13 +88,7 @@ def subscription_notice(kind='subscription_charged_successfully'):
                 }
             },
             "subscription": subscription(),
-            "product": {
-                "seller": "/generic/seller/19/",
-                "resource_uri": "/generic/product/18/",
-                "resource_pk": 18,
-                "public_id": "mozilla-concrete-brick",
-                "external_id": "mozilla-concrete-brick"
-            },
+            "product": seller_product(),
         },
         "braintree": {
             "kind": kind
@@ -372,9 +376,15 @@ class TestGetSubscriptions(AuthenticatedTestCase):
     def setUp(self):
         super(TestGetSubscriptions, self).setUp()
         self.subscription_obj = subscription()
+        self.seller_product = seller_product()
 
         bt = self.solitude.braintree
         bt.mozilla.subscription.get.return_value = [self.subscription_obj]
+
+        url_getter = mock.Mock()
+        # Respond to expanding the subscription.seller_product URI attribute.
+        self.solitude.by_url.return_value = url_getter
+        url_getter.get_object.return_value = self.seller_product
 
     def get(self):
         return self.json(
@@ -386,6 +396,13 @@ class TestGetSubscriptions(AuthenticatedTestCase):
 
         eq_(data['subscriptions'][0]['resource_uri'],
             self.subscription_obj['resource_uri'])
+        eq_(response.status_code, 200)
+
+    def test_expand_seller_product(self):
+        response, data = self.get()
+
+        eq_(data['subscriptions'][0]['seller_product'],
+            self.seller_product)
         eq_(response.status_code, 200)
 
     def test_only_get_user_subscriptions(self):

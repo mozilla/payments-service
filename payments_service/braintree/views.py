@@ -116,11 +116,25 @@ class Subscriptions(APIView):
         self.api = solitude.api()
 
     def get(self, request):
-        objects = self.api.braintree.mozilla.subscription.get(
+        subscriptions = self.api.braintree.mozilla.subscription.get(
             active=True,
             paymethod__braintree_buyer__buyer=self.request.user.pk,
         )
-        return Response({'subscriptions': objects}, status=200)
+
+        # This is a list of result attributes that are solitude URIs.
+        # Each one will be loaded so that the value contains the sub-object.
+        to_expand = ('seller_product',)
+
+        for sub in subscriptions:
+            for attr, val in sub.iteritems():
+                if attr in to_expand:
+                    # TODO: adjust Solitude's output so that we don't have to
+                    # make sub requests.
+                    log.info('expanding object result by calling URI {}'
+                             .format(val))
+                    sub[attr] = self.api.by_url(val).get_object()
+
+        return Response({'subscriptions': subscriptions}, status=200)
 
     def post(self, request):
         form = SubscriptionForm(request.DATA)

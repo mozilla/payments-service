@@ -239,11 +239,45 @@ These endpoints allow you to work with Braintree plan subscriptions.
 
     Get all active subscriptions for the currently signed in user.
 
-    :>json array subscriptions: array of `solitude subscriptions`_
+    :>json array subscriptions:
+        array of `solitude subscriptions`_ with the `seller_product` attribute
+        expanded to the target `generic product object`_.
+
+    Example:
+
+    .. code-block:: json
+
+        {
+            "subscriptions": [{
+                "id": 1,
+                "resource_uri": "/braintree/mozilla/subscription/1/",
+                "resource_pk": 1,
+                "provider_id": "4r2fh6",
+                "paymethod": "/braintree/mozilla/paymethod/1/",
+                "seller_product":{
+                    "resource_pk": 1,
+                    "resource_uri": "/generic/product/1/",
+                    "public_id": "mozilla-concrete-brick",
+                    "external_id": "mozilla-concrete-brick",
+                    "seller": "/generic/seller/8/",
+                    "seller_uuids": {
+                        "bango": null,
+                        "reference": null
+                    },
+                    "access": 1,
+                    "secret": null
+                },
+                "active": true,
+                "counter": 0,
+                "created": "2015-07-29T11:41:09",
+                "modified": "2015-07-29T11:41:09"
+            }]
+        }
 
     :status 200: subscriptions returned successfully
 
 .. _`solitude subscriptions`: http://solitude.readthedocs.org/en/latest/topics/braintree.html#get--braintree-mozilla-subscription--subscription%20id--
+.. _`generic product object`: http://solitude.readthedocs.org/en/latest/topics/generic.html#product
 
 .. http:post:: /api/braintree/subscriptions/
 
