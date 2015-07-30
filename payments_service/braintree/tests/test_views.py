@@ -117,11 +117,11 @@ class TestTokenGenerator(AuthenticatedTestCase):
         eq_(data['token'], 'some-token')
 
 
-class TestPayMethod(AuthenticatedTestCase):
+class PayMethodTest(AuthenticatedTestCase):
 
     def setUp(self):
-        super(TestPayMethod, self).setUp()
-        self.url = reverse('braintree:mozilla.paymethod')
+        super(PayMethodTest, self).setUp()
+
         # pretend this is a paymethod object
         self.pay_method = {
             'resource_pk': 1,
@@ -131,6 +131,13 @@ class TestPayMethod(AuthenticatedTestCase):
         self.solitude.braintree.mozilla.paymethod.get.return_value = [
             self.pay_method,
         ]
+
+
+class TestPayMethod(PayMethodTest):
+
+    def setUp(self):
+        super(TestPayMethod, self).setUp()
+        self.url = reverse('braintree:mozilla.paymethod')
 
     def get(self, query=None):
         url = self.url
@@ -201,6 +208,52 @@ class TestPayMethod(AuthenticatedTestCase):
             'should not filter GETs by `active` when patching in case '
             'inactive paymethods need to be patched.'
         )
+
+
+class TestBraintreePayMethod(PayMethodTest):
+
+    def setUp(self):
+        super(TestBraintreePayMethod, self).setUp()
+        self.url = reverse('braintree:braintree.paymethod')
+
+        self.solitude.braintree.paymethod.post.return_value = {
+            'mozilla': self.pay_method,
+            'braintree': {'token': 'new-pay-method-token'},
+        }
+
+    def post(self, data=None):
+        if not data:
+            data = {'nonce': 'braintree-client-nonce'}
+        return self.json(self.client.post(self.url, data))
+
+    def test_successful_post(self):
+        response, data = self.post()
+        eq_(response.status_code, 201)
+
+    def test_post_creates_pay_method_for_user(self):
+        self.post()
+        api_post = self.solitude.braintree.paymethod.post
+        eq_(api_post.call_args[0][0]['buyer_uuid'], self.buyer_uuid)
+
+    def test_post_returns_list_of_pay_methods(self):
+        response, data = self.post()
+        eq_(data['payment_methods'], [self.pay_method])
+
+    def test_post_returns_only_pay_methods_for_user(self):
+        self.post()
+        api_get = self.solitude.braintree.mozilla.paymethod.get
+        eq_(api_get.call_args[1]['braintree_buyer__buyer__uuid'],
+            self.buyer_uuid)
+
+    def test_post_returns_only_active_pay_methods(self):
+        self.post()
+        api_get = self.solitude.braintree.mozilla.paymethod.get
+        eq_(api_get.call_args[1]['active'], True)
+
+    def test_proxy_bad_solitude_request(self):
+        self.solitude.braintree.paymethod.post.side_effect = HttpClientError()
+        response, data = self.post()
+        eq_(response.status_code, 400)
 
 
 class TestSubscribe(AuthenticatedTestCase):

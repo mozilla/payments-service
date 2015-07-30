@@ -15,6 +15,8 @@ urlpatterns = patterns(
         name='subscriptions.paymethod.change'),
     url(r'^token/generate/$', views.TokenGenerator.as_view(),
         name='token.generate'),
+    url(r'^paymethod/?$', views.BraintreePayMethod.as_view(),
+        name='braintree.paymethod'),
     url(r'^mozilla/paymethod/(?P<pk>[^/]+)?/?$', views.PayMethod.as_view(),
         name='mozilla.paymethod'),
     url(r'^webhook/$', views.Webhook.as_view(), name='webhook'),
