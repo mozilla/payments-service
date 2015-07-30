@@ -56,7 +56,9 @@ def premail(source):
 
 class PayMethod(SolitudeBodyguard):
     """
-    Get saved payment methods for the logged in buyer.
+    Work with saved payment methods for the signed in buyer.
+    This connects to the Mozilla data store of payment
+    methods.
     """
     methods = ['get', 'patch']
     resource = 'braintree.mozilla.paymethod'
@@ -105,6 +107,33 @@ class PayMethod(SolitudeBodyguard):
             return error_403('Not allowed')
 
         return super(PayMethod, self).patch(request, pk=pk)
+
+
+class BraintreePayMethod(APIView):
+    """
+    Work with payment methods for the signed in in buyer.
+    This connects to the Braintree API directly.
+    """
+    def post(self, request):
+        api = solitude.api()
+
+        data = request.data.copy()
+        data['buyer_uuid'] = request.user.uuid
+        try:
+            result = api.braintree.paymethod.post(data)
+        except HttpClientError, exc:
+            log.warn('post: solitude returned 400: {}'.format(exc))
+            return error_400(exception=exc)
+
+        log.info('created payment method {} for user {}'
+                 .format(result['mozilla']['resource_pk'],
+                         request.user.uuid))
+
+        payment_methods = api.braintree.mozilla.paymethod.get(
+            braintree_buyer__buyer__uuid=request.user.uuid,
+            active=True,
+        )
+        return Response({'payment_methods': payment_methods}, status=201)
 
 
 class Subscriptions(APIView):

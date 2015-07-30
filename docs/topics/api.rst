@@ -176,11 +176,14 @@ for the client.
 Payment Methods
 ~~~~~~~~~~~~~~~
 
-This endpoint lets you retrieve saved `Braintree payment methods`_
-for the currently logged in user. After a user submits payment,
-their method of payment (e.g. a credit card) is saved for future purchases.
+These endpoints let you work with `Braintree payment methods`_
+for the currently signed in user.
 
 .. http:get:: /api/braintree/mozilla/paymethod/
+
+    Retrieve all of the user's saved `payment methods`_.
+    After a user submits payment, their method of payment
+    (e.g. a credit card) is saved for future purchases.
 
     **Request**
 
@@ -211,15 +214,55 @@ their method of payment (e.g. a credit card) is saved for future purchases.
     See the Solitude docs on `payment methods`_ for detailed documentation of
     this return value.
 
-.. _`Braintree payment methods`: https://developers.braintreepayments.com/javascript+python/guides/payment-methods
-.. _`payment methods`: https://solitude.readthedocs.org/en/latest/topics/braintree.html#id2
+    :status 200: results returned successfully.
 
-Limited ability to alter the pay method is available. To set the payment method
-to inactive:
+.. http:post:: /api/braintree/paymethod/
+
+    Create a new `payment method`_ for the signed in user.
+
+    :param string nonce:
+        A single use token representing the buyer's submitted payment method.
+        The Braintree JS client intercepts a form
+        submission (e.g. credit card numbers), obfuscates it, and gives us
+        this string.
+
+    :>json array payment_methods:
+        A list of all the user's active payment methods including the one just
+        created.
+
+    Example:
+
+    .. code-block:: json
+
+        {
+            "payment_methods": [{
+                "id": 1,
+                "resource_pk": 1,
+                "resource_uri": "/braintree/mozilla/paymethod/1/",
+                "type": 1,
+                "type_name": "Visa",
+                "truncated_id": "1111",
+                "provider_id": "49fv4m",
+                "braintree_buyer": "/braintree/mozilla/buyer/1/",
+                "counter": 0,
+                "active": true,
+                "created": "2015-06-02T15:20:03",
+                "modified": "2015-06-02T15:20:03"
+            }]
+        }
+
+    :status 201: object created successfully.
+
+.. _`Braintree payment methods`: https://developers.braintreepayments.com/javascript+python/guides/payment-methods
 
 .. http:patch:: /api/braintree/mozilla/paymethod/:id/
 
+    This endpoint allows you to alter a payment method belonging to the signed
+    in user.
+
     **Request**
+
+    To make the payment method inactive:
 
     .. code-block:: json
 
@@ -322,8 +365,6 @@ These endpoints allow you to work with Braintree plan subscriptions.
 
     :status 204: subscription changed successfully
 
-.. _`payment method`: https://solitude.readthedocs.org/en/latest/topics/braintree.html#id2
-
 .. http:post:: /api/braintree/subscriptions/cancel/
 
     Cancel a `subscription`_. The subscription object must belong to the signed in user.
@@ -358,4 +399,6 @@ see the `Braintree documentation <https://developers.braintreepayments.com/javas
 
     This request and response is the same as Solitudes `webhook API`_.
 
+.. _`payment method`: https://solitude.readthedocs.org/en/latest/topics/braintree.html#id2
+.. _`payment methods`: https://solitude.readthedocs.org/en/latest/topics/braintree.html#id2
 .. _`webhook API`: http://solitude.readthedocs.org/en/latest/topics/braintree.html#webhook
