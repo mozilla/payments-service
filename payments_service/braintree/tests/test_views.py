@@ -298,37 +298,6 @@ class TestSubscribe(AuthenticatedTestCase):
         }
         return pay_method_uri
 
-    def test_with_existing_customer(self):
-        buyer_pk = self.setup_generic_buyer()
-        self.setup_no_subscription_yet()
-        self.expect_new_pay_method()
-
-        res, data = self.post()
-        eq_(res.status_code, 204, res)
-
-        (self.solitude.braintree.mozilla.buyer.get_object_or_404
-         .assert_called_with(buyer=buyer_pk))
-        assert not self.solitude.braintree.customer.post.called
-
-        self.solitude.braintree.paymethod.post.assert_called_with({
-            'buyer_uuid': self.buyer_uuid,
-            'nonce': self.nonce,
-        })
-
-    def test_with_new_customer(self):
-        self.setup_generic_buyer()
-        self.setup_no_subscription_yet()
-        self.expect_new_pay_method()
-
-        # Set up non-existing braintree customer.
-        self.solitude.braintree.mozilla.buyer.get_object_or_404.side_effect = (
-            ObjectDoesNotExist)
-
-        res, data = self.post()
-        eq_(res.status_code, 204, res)
-
-        assert self.solitude.braintree.customer.post.called
-
     def test_with_new_pay_method(self):
         self.setup_generic_buyer()
         self.setup_no_subscription_yet()

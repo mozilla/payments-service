@@ -1,7 +1,6 @@
 import logging
 
 from django.conf import settings
-from django.core.exceptions import ObjectDoesNotExist
 from django.core.mail import EmailMultiAlternatives, get_connection
 from django.http import HttpResponse
 from django.template import Context
@@ -189,7 +188,6 @@ class Subscriptions(APIView):
                 response='user is already subscribed to this product')
 
         try:
-            self.set_up_customer(request.user)
             pay_method_uri = self.get_pay_method(
                 request.user,
                 form.cleaned_data['pay_method_uri'],
@@ -219,17 +217,6 @@ class Subscriptions(APIView):
                      .format(b=buyer.uuid, m=pay_method_uri))
 
         return pay_method_uri
-
-    def set_up_customer(self, buyer):
-        try:
-            self.api.braintree.mozilla.buyer.get_object_or_404(
-                buyer=buyer.pk)
-            log.info('using existing braintree customer tied to buyer {b}'
-                     .format(b=buyer))
-        except ObjectDoesNotExist:
-            log.info('creating new braintree customer for {buyer}'
-                     .format(buyer=buyer.pk))
-            self.api.braintree.customer.post({'uuid': buyer.uuid})
 
 
 class ChangeSubscriptionPayMethod(APIView):

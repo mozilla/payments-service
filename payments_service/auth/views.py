@@ -41,9 +41,14 @@ class SignInView(UnprotectedAPIView):
                     u'created solitude buyer {buyer} for FxA user {fxa_uuid}'
                     .format(buyer=buyer['uuid'], fxa_uuid=fxa_uuid))
                 created = True
+
+            # Make sure this user has a braintree customer which is needed for
+            # pretty much everything.
+            self.set_up_braintree_customer(buyer)
+
         except HttpClientError, exc:
             log.warn(
-                u'error creating solitude buyer; {exc.__class__}: {exc}; '
+                u'error setting up solitude buyers; {exc.__class__}: {exc}; '
                 u'FxA user={fxa_uuid}'.format(exc=exc, fxa_uuid=fxa_uuid))
             return error_400(exception=exc)
 
@@ -75,6 +80,18 @@ class SignInView(UnprotectedAPIView):
             'payment_methods': pay_methods,
             'csrf_token': csrf.get_token(request),
         }, status=201 if created else 200)
+
+    def set_up_braintree_customer(self, buyer):
+        api = solitude.api()
+        try:
+            api.braintree.mozilla.buyer.get_object_or_404(
+                buyer=buyer['resource_pk'])
+            log.info('using existing braintree customer tied to buyer {b}'
+                     .format(b=buyer))
+        except ObjectDoesNotExist:
+            log.info('creating new braintree customer for {buyer}'
+                     .format(buyer=buyer['resource_pk']))
+            api.braintree.customer.post({'uuid': buyer['uuid']})
 
 
 class SignOutView(APIView):

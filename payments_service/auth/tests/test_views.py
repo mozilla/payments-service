@@ -127,6 +127,29 @@ class TestSignInView(SignInTest):
         res, data = self.post()
         assert 'csrf_token' in data, 'Unexpected: {}'.format(data)
 
+    def test_with_existing_braintree_customer(self):
+        buyer = self.set_solitude_buyer_getter()
+        res, data = self.post()
+
+        bt_getter = self.solitude.braintree.mozilla.buyer.get_object_or_404
+        bt_getter.assert_called_with(buyer=buyer['resource_pk'])
+        assert not self.solitude.braintree.customer.post.called
+        eq_(res.status_code, 200, res)
+
+    def test_without_braintree_customer(self):
+        buyer = self.set_solitude_buyer_getter()
+
+        # Set up non-existing braintree customer.
+        bt_getter = self.solitude.braintree.mozilla.buyer.get_object_or_404
+        bt_getter.side_effect = ObjectDoesNotExist
+
+        res, data = self.post()
+
+        self.solitude.braintree.customer.post.assert_called_with(
+            {'uuid': buyer['uuid']}
+        )
+        eq_(res.status_code, 200, res)
+
 
 class TestSignOut(AuthenticatedTestCase):
 
