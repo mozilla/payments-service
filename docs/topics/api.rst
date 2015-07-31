@@ -253,6 +253,39 @@ for the currently signed in user.
 
     :status 201: object created successfully.
 
+.. http:post:: /api/braintree/paymethod/delete/
+
+    Delete a `payment method`_ belonging to the signed in user.
+
+    :param string pay_method_uri:
+        Solitude URI to the `payment method`_ that should be deleted.
+
+    :>json array payment_methods:
+        An updated list of all the user's active payment methods after deletion.
+
+    Example:
+
+    .. code-block:: json
+
+        {
+            "payment_methods": [{
+                "id": 1,
+                "resource_pk": 1,
+                "resource_uri": "/braintree/mozilla/paymethod/1/",
+                "type": 1,
+                "type_name": "Visa",
+                "truncated_id": "1111",
+                "provider_id": "49fv4m",
+                "braintree_buyer": "/braintree/mozilla/buyer/1/",
+                "counter": 0,
+                "active": true,
+                "created": "2015-06-02T15:20:03",
+                "modified": "2015-06-02T15:20:03"
+            }]
+        }
+
+    :status 200: object deleted successfully.
+
 .. _`Braintree payment methods`: https://developers.braintreepayments.com/javascript+python/guides/payment-methods
 
 .. http:patch:: /api/braintree/mozilla/paymethod/:id/
