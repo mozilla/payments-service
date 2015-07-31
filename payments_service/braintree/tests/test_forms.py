@@ -2,7 +2,7 @@ from nose.tools import eq_
 
 from payments_service.auth import SolitudeBuyer
 
-from .test_views import SubscriptionTest
+from .test_views.test_subscriptions import SubscriptionTest
 from ..forms import ChangeSubscriptionPayMethodForm, ManageSubscriptionForm
 
 
