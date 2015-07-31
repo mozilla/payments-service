@@ -8,6 +8,8 @@ from payments_service import solitude
 from payments_service.base.views import error_400, error_403
 from payments_service.solitude import SolitudeBodyguard
 
+from ..forms import DeletePayMethodForm
+
 log = logging.getLogger(__name__)
 
 
@@ -86,8 +88,31 @@ class BraintreePayMethod(APIView):
                  .format(result['mozilla']['resource_pk'],
                          request.user.uuid))
 
-        payment_methods = api.braintree.mozilla.paymethod.get(
-            braintree_buyer__buyer__uuid=request.user.uuid,
-            active=True,
-        )
+        payment_methods = get_active_user_pay_methods(request.user)
         return Response({'payment_methods': payment_methods}, status=201)
+
+
+class DeleteBraintreePayMethod(APIView):
+
+    def post(self, request):
+        form = DeletePayMethodForm(request.user, request.data)
+        if not form.is_valid():
+            return error_400(response=form.errors)
+
+        pay_method = form.cleaned_data.get('pay_method_uri')
+        log.info('deleting payment method for user: {} {}'
+                 .format(pay_method, request.user))
+        solitude.api().braintree.paymethod.delete.post({
+            'paymethod': pay_method,
+        })
+
+        payment_methods = get_active_user_pay_methods(request.user)
+        return Response({'payment_methods': payment_methods}, status=200)
+
+
+def get_active_user_pay_methods(user):
+    api = solitude.api()
+    return api.braintree.mozilla.paymethod.get(
+        braintree_buyer__buyer__uuid=user.uuid,
+        active=True,
+    )

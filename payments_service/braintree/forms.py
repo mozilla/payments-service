@@ -1,9 +1,8 @@
 import logging
 
 from django import forms
-from django.core.exceptions import ObjectDoesNotExist
 
-from .. import solitude
+from . import utils
 
 log = logging.getLogger(__name__)
 
@@ -41,7 +40,7 @@ class ManageSubscriptionForm(forms.Form):
 
     def clean_subscription_uri(self):
         uri = self.cleaned_data['subscription_uri']
-        if not self.user_owns_resource(
+        if not utils.user_owns_resource(
             uri,
             {'paymethod__braintree_buyer__buyer': self.user.pk},
         ):
@@ -50,25 +49,32 @@ class ManageSubscriptionForm(forms.Form):
             )
         return uri
 
-    def user_owns_resource(self, uri, lookup):
-        try:
-            # Get the resource at the URI filtered by the signed in user.
-            # If the filtered result is empty (404) it means the user does not
-            # own the resource.
-            solitude.api().by_url(uri).get_object_or_404(**lookup)
-            return True
-        except ObjectDoesNotExist, exc:
-            log.debug('{cls}: catching {e.__class__.__name__}: {e}'
-                      .format(cls=self.__class__.__name__, e=exc))
-            return False
-
 
 class ChangeSubscriptionPayMethodForm(ManageSubscriptionForm):
     new_pay_method_uri = forms.CharField(max_length=255)
 
     def clean_new_pay_method_uri(self):
         uri = self.cleaned_data['new_pay_method_uri']
-        if not self.user_owns_resource(
+        if not utils.user_owns_resource(
+            uri,
+            {'braintree_buyer__buyer__uuid': self.user.uuid},
+        ):
+            raise forms.ValidationError(
+                'paymethod by URI does not exist or belongs to another user'
+            )
+        return uri
+
+
+class DeletePayMethodForm(forms.Form):
+    pay_method_uri = forms.CharField(max_length=255)
+
+    def __init__(self, user, *args, **kw):
+        super(DeletePayMethodForm, self).__init__(*args, **kw)
+        self.user = user
+
+    def clean_pay_method_uri(self):
+        uri = self.cleaned_data['pay_method_uri']
+        if not utils.user_owns_resource(
             uri,
             {'braintree_buyer__buyer__uuid': self.user.uuid},
         ):
