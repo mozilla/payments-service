@@ -102,7 +102,10 @@ class DeleteBraintreePayMethod(APIView):
         pay_method = form.cleaned_data.get('pay_method_uri')
         log.info('deleting payment method for user: {} {}'
                  .format(pay_method, request.user))
-        solitude.api().braintree.paymethod.delete.post({
+
+        # This is a workaround for accessing the /delete/ path without slumber
+        # thinking it's an HTTP DELETE.
+        solitude.api().braintree.paymethod('delete').post({
             'paymethod': pay_method,
         })
 
