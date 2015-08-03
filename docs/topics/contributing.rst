@@ -7,9 +7,48 @@ If you'd like to contribute a feature to the service, here's how to get set up.
 Local Installation
 ==================
 
-Installation is done through `docker compose`_ from `payments-env`_
-but this process is currently in flux. This section will be updated
-when the dust settles.
+Installation is done through `docker compose`_ from `payments-env`_.
+As documented in the `payments-env`_ README, follow the instructions for
+setting up a development environment then start your development servers with
+something like this::
+
+    cd /path/to/payments-env/
+    docker-compose up -d
+
+That's it! You are ready to access the API. Try it out by running this with
+curl on your host machine (not docker)::
+
+    curl -v http://pay.dev:8000/api/
+
+You should see a successful health check of the :ref:`system`::
+
+    {"solitude":{"connected":true,"error_response":null,"error":"False"},"ok":true}
+
+Running Tests
+=============
+
+You also need `payments-env`_ to run the test suite. After starting up all
+docker containers, start a shell into the service container. An easy way to do
+this is with `docker-utils`_::
+
+    cd /path/to/payments-env/
+    docker-utils bash service
+
+Now you can run all tests with the usual Django command::
+
+    python manage.py test
+
+Building Documentation
+======================
+
+If you need to make a patch that includes documentation, you should build the
+docs to make sure they render without errors. In your docker container shell
+run::
+
+    make -C docs html
+
+Then go back to your host machine (not docker) and open ``docs/_build/html/index.html``
+from your `payments-service` source directory.
 
 Sending email
 =============
@@ -55,13 +94,20 @@ This will pre-generate all the HTML for premailed emails so they can be checked 
 
 To find the CSS.
 
+Using The UI Hot Reloader (Webpack)
+===================================
 
-Running Tests
-=============
+If you want to access the service API when the UI is in `hot reloader mode`_ then you
+need to enable CORS so that the ``pay.webpack`` host can access the API at
+``pay.dev``. Set this environment variable in the shell before you start up the
+docker containers::
 
-.. code-block:: shell
+    cd /path/to/payments-env/
+    export SERVICE_USE_WEBPACK=1
+    docker-compose up -d
 
-    python manage.py test
+While this variable is set, you cannot work with the API from the
+``http://pay.dev`` domain.
 
 Bugs and Patches
 ================
@@ -72,5 +118,7 @@ https://github.com/mozilla/payments-service/
 
 .. _`Django settings`: https://docs.djangoproject.com/en/1.8/ref/settings/#email-host
 .. _`docker compose`: http://docs.docker.com/compose/
+.. _`docker-utils`: https://github.com/andymckay/docker-utils
+.. _`hot reloader mode`: https://github.com/mozilla/payments-ui#hot-module-reloading
 .. _`payments-env`: https://github.com/mozilla/payments-env
-.. _`braintree webhook`: http://payments.readthedocs.org/en/latest/testing.html#generating-webhooks
+.. _`braintree_webhook`: http://payments.readthedocs.org/en/latest/testing.html#generating-webhooks

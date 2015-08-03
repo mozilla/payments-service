@@ -46,6 +46,8 @@ will give you some additional details.
     :status 405: endpoint doesn't support this method
     :status 500: unexpected error
 
+.. _system:
+
 System
 ======
 

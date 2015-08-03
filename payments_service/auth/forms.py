@@ -43,8 +43,10 @@ class SignInForm(forms.Form):
             return
 
         url = urlparse.urljoin(settings.FXA_OAUTH_URL, 'v1/token')
-        log.info(u'getting token for code at {url}; code={code}'
-                 .format(url=url, code=self.repr_token(code)))
+        log.info(u'getting token for code at {url}; code={code}; '
+                 u'client={client}'
+                 .format(url=url, code=self.repr_token(code),
+                         client=settings.FXA_CLIENT_ID))
 
         data = self.fxa_post(url, {
             'code': code,
