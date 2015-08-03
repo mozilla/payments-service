@@ -157,10 +157,15 @@ class TestDeletePayMethod(PayMethodTest):
         super(TestDeletePayMethod, self).setUp()
         self.url = reverse('braintree:paymethod.delete')
 
-        self.solitude.braintree.paymethod.delete.post.return_value = {
+        # This sets up a workaround call in slumber that looks like:
+        # api.braintree.paymethod('delete').post(...)
+        endpoint = mock.Mock()
+        endpoint.post.return_value = {
             'mozilla': self.pay_method,
             'braintree': {'token': 'new-pay-method-token'},
         }
+        self.delete_paymethod_endpoint = endpoint.post
+        self.solitude.braintree.paymethod.return_value = endpoint
 
         p = mock.patch('payments_service.braintree.utils.user_owns_resource')
         self.user_owns_resource = p.start()
@@ -188,7 +193,7 @@ class TestDeletePayMethod(PayMethodTest):
 
     def test_paymethod_is_deleted_from_solitude(self):
         self.post()
-        self.solitude.braintree.paymethod.delete.post.assert_called_with({
+        self.delete_paymethod_endpoint.assert_called_with({
             'paymethod': self.pay_method['resource_uri']
         })
 
