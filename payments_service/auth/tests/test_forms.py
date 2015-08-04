@@ -2,10 +2,10 @@ from nose.tools import eq_
 from requests.exceptions import HTTPError
 
 from ..forms import SignInForm
-from . import AuthTest
+from .test_views import BaseSignInTest
 
 
-class TestSignInForm(AuthTest):
+class TestSignInForm(BaseSignInTest):
 
     def submit(self, data=None):
         if data is None:
@@ -50,7 +50,7 @@ class TestSignInForm(AuthTest):
         assert self.fxa_post.called
 
 
-class TestSignInFormWithCode(AuthTest):
+class TestSignInFormWithCode(BaseSignInTest):
 
     def setUp(self):
         super(TestSignInFormWithCode, self).setUp()
@@ -58,7 +58,8 @@ class TestSignInFormWithCode(AuthTest):
 
     def submit(self, data=None):
         if data is None:
-            data = {'authorization_code': self.code}
+            data = {'authorization_code': self.code,
+                    'client_id': self.client_id}
         return SignInForm(data)
 
     def test_form_ok(self):
@@ -73,11 +74,20 @@ class TestSignInFormWithCode(AuthTest):
 
         assert self.fxa_post.called
 
+    def test_missing_client_id(self):
+        form = self.submit(data={'authorization_code': self.code})
+        assert '__all__' in form.errors, form.errors.as_text()
+
+    def test_wrong_client_id(self):
+        form = self.submit(data={'authorization_code': self.code,
+                                 'client_id': 'nope'})
+        assert 'client_id' in form.errors, form.errors.as_text()
+
     def test_bad_token_response(self):
         self.set_fxa_post_side_effect(HTTPError('Bad Request'))
 
         form = self.submit()
-        assert 'authorization_code' in form.errors, form.errors.as_text()
+        assert '__all__' in form.errors, form.errors.as_text()
         assert self.fxa_post.called
 
     def test_token_is_verified(self):
@@ -87,5 +97,5 @@ class TestSignInFormWithCode(AuthTest):
         self.set_fxa_verify_response(scope=['payments'])
         form = self.submit()
 
-        assert 'authorization_code' in form.errors, form.errors.as_text()
+        assert '__all__' in form.errors, form.errors.as_text()
         assert self.fxa_post.called

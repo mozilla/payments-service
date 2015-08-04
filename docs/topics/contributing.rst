@@ -94,21 +94,6 @@ This will pre-generate all the HTML for premailed emails so they can be checked 
 
 To find the CSS.
 
-Using The UI Hot Reloader (Webpack)
-===================================
-
-If you want to access the service API when the UI is in `hot reloader mode`_ then you
-need to enable CORS so that the ``pay.webpack`` host can access the API at
-``pay.dev``. Set this environment variable in the shell before you start up the
-docker containers::
-
-    cd /path/to/payments-env/
-    export SERVICE_USE_WEBPACK=1
-    docker-compose up -d
-
-While this variable is set, you cannot work with the API from the
-``http://pay.dev`` domain.
-
 Bugs and Patches
 ================
 

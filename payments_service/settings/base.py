@@ -224,20 +224,19 @@ FXA_OAUTH_URL = 'https://oauth-stable.dev.lcip.org'
 
 
 # Management app credentials, only used in developemnt.
-if os.environ.get('SERVICE_USE_WEBPACK') == '1':
+# The dictionary structure is ID: secret.
+FXA_CREDENTIALS = {
+    # FxA client for http://pay.dev
+    # https://oauth-stable.dev.lcip.org/console/client/8d7c6c8549cc6deb
+    '8d7c6c8549cc6deb': (
+        'b18c1a8d6797f00b88d5da1df57ae01c0c3cc2ed5309e8112bccae03d59e4286'
+    ),
     # FxA client for http://pay.webpack:8080
     # https://oauth-stable.dev.lcip.org/console/client/a63657a4c78dd650
-    FXA_CLIENT_ID = 'a63657a4c78dd650'
-    FXA_CLIENT_SECRET = (
+    'a63657a4c78dd650': (
         '41172a687037eea958eed0853c2fb3e441b0dd209bc459219a636cbd0e537ad0'
-    )
-else:
-    # Default FxA client for http://pay.dev
-    # https://oauth-stable.dev.lcip.org/console/client/8d7c6c8549cc6deb
-    FXA_CLIENT_ID = '8d7c6c8549cc6deb'
-    FXA_CLIENT_SECRET = (
-        'b18c1a8d6797f00b88d5da1df57ae01c0c3cc2ed5309e8112bccae03d59e4286'
-    )
+    ),
+}
 
 
 # When emailing buyers about their subscriptions, this
@@ -253,6 +252,4 @@ MANAGEMENT_URL = 'http://pay.dev:8000/management.html'
 
 # A request origin value that CORS should be enabled for.
 # If this is None, CORS will not be enabled at all.
-ENABLE_CORS_FOR_ORIGIN = ('http://pay.webpack:8080'
-                          if os.environ.get('SERVICE_USE_WEBPACK') == '1'
-                          else None)
+ENABLE_CORS_FOR_ORIGIN = 'http://pay.webpack:8080'

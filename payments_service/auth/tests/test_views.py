@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.urlresolvers import reverse
 from django.test import RequestFactory
@@ -11,7 +12,19 @@ from . import AuthTest
 from .. import SessionUserAuthentication
 
 
-class SignInTest(AuthTest):
+class BaseSignInTest(AuthTest):
+
+    def setUp(self):
+        super(BaseSignInTest, self).setUp()
+        self.client_id = 'some-fxa-client-id'
+        p = mock.patch.object(settings, 'FXA_CREDENTIALS', {
+            self.client_id: 'some-fxa-secret',
+        })
+        p.start()
+        self.addCleanup(p.stop)
+
+
+class SignInTest(BaseSignInTest):
 
     def setUp(self):
         super(SignInTest, self).setUp()
@@ -60,7 +73,8 @@ class TestSignInView(SignInTest):
         buyer = self.set_solitude_buyer_getter()
 
         res, data = self.post(data={
-            'authorization_code': 'some-fxa-auth-code'
+            'authorization_code': 'some-fxa-auth-code',
+            'client_id': self.client_id,
         })
         eq_(res.status_code, 200, res)
         eq_(data['buyer_uuid'], buyer['uuid'])
