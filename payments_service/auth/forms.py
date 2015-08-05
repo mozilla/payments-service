@@ -20,13 +20,24 @@ class SignInForm(forms.Form):
     authorization_code
         An internally generated code from a sign-in form that
         will be traded for an access token
+    client_id
+        When passing an authorization_code this is a hint to
+        the FxA client ID that created the code. This is
+        necessary because several clients may be supported by
+        the backend at the same time.
     """
     access_token = forms.CharField(max_length=255, required=False)
     authorization_code = forms.CharField(max_length=255, required=False)
+    client_id = forms.ChoiceField(required=False)
 
     def __init__(self, *args, **kw):
         self.fxa_user_id = None
         self.fxa_email = None
+
+        client_ids = settings.FXA_CREDENTIALS.keys()
+        # Populate choices lazily for testing.
+        self.declared_fields['client_id'].choices = zip(client_ids, client_ids)
+
         super(SignInForm, self).__init__(*args, **kw)
 
     def clean(self):
@@ -35,22 +46,31 @@ class SignInForm(forms.Form):
             raise forms.ValidationError(
                 'access_token or authorization_code is required'
             )
-        return data
+        if data.get('authorization_code'):
+            if not data.get('client_id'):
+                raise forms.ValidationError(
+                    'client_id is required when submitting an '
+                    'authorization_code'
+                )
+            self.validate_authorization_code(data)
 
-    def clean_authorization_code(self):
-        code = self.cleaned_data['authorization_code']
-        if not code:
-            return
+    def validate_authorization_code(self, cleaned_data):
+        code = cleaned_data['authorization_code']
+
+        client_id = cleaned_data['client_id']
+        client_secret = settings.FXA_CREDENTIALS[client_id]
 
         url = urlparse.urljoin(settings.FXA_OAUTH_URL, 'v1/token')
-        log.info(u'getting token for code at {url}; code={code}'
-                 .format(url=url, code=self.repr_token(code)))
+        log.info(u'getting token for code at {url}; code={code}; '
+                 u'client={client}'
+                 .format(url=url, code=self.repr_token(code),
+                         client=client_id))
 
         data = self.fxa_post(url, {
             'code': code,
             'grant_type': 'authorization_code',
-            'client_id': settings.FXA_CLIENT_ID,
-            'client_secret': settings.FXA_CLIENT_SECRET,
+            'client_id': client_id,
+            'client_secret': client_secret,
         })
         access_token = data['access_token']
 
@@ -60,15 +80,13 @@ class SignInForm(forms.Form):
 
         self.validate_access_token(access_token)
 
-        return code
-
     def clean_access_token(self):
         access_token = self.cleaned_data['access_token']
         if not access_token:
             return
 
         self.validate_access_token(access_token)
-        return access_token
+        return self.cleaned_data
 
     def fxa_post(self, url, data, **kw):
         kw.setdefault('headers', {})

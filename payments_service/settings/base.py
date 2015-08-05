@@ -44,6 +44,7 @@ MIDDLEWARE_CLASSES = (
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.middleware.security.SecurityMiddleware',
+    'payments_service.base.middleware.CORSMiddleware',
 )
 
 SESSION_ENGINE = 'encrypted_cookies'
@@ -221,13 +222,22 @@ SOLITUDE_SECRET = 'please change this'
 # https://github.com/mozilla/fxa-oauth-server/
 FXA_OAUTH_URL = 'https://oauth-stable.dev.lcip.org'
 
-# Management app credentials tied to http://pay.dev:8000,
-# just for development.
-# https://oauth-stable.dev.lcip.org/console/client/8d7c6c8549cc6deb
-FXA_CLIENT_ID = '8d7c6c8549cc6deb'
-FXA_CLIENT_SECRET = (
-    'b18c1a8d6797f00b88d5da1df57ae01c0c3cc2ed5309e8112bccae03d59e4286'
-)
+
+# Management app credentials, only used in developemnt.
+# The dictionary structure is ID: secret.
+FXA_CREDENTIALS = {
+    # FxA client for http://pay.dev
+    # https://oauth-stable.dev.lcip.org/console/client/8d7c6c8549cc6deb
+    '8d7c6c8549cc6deb': (
+        'b18c1a8d6797f00b88d5da1df57ae01c0c3cc2ed5309e8112bccae03d59e4286'
+    ),
+    # FxA client for http://pay.webpack:8080
+    # https://oauth-stable.dev.lcip.org/console/client/a63657a4c78dd650
+    'a63657a4c78dd650': (
+        '41172a687037eea958eed0853c2fb3e441b0dd209bc459219a636cbd0e537ad0'
+    ),
+}
+
 
 # When emailing buyers about their subscriptions, this
 # will be the reply-to address. If a buyer replies to
@@ -239,3 +249,7 @@ SUBSCRIPTION_REPLY_TO_EMAIL = 'payments-support@mozilla.com'
 SUBSCRIPTION_FROM_EMAIL = 'no-reply@mozilla.com'
 
 MANAGEMENT_URL = 'http://pay.dev:8000/management.html'
+
+# A request origin value that CORS should be enabled for.
+# If this is None, CORS will not be enabled at all.
+ENABLE_CORS_FOR_ORIGIN = 'http://pay.webpack:8080'

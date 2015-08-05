@@ -46,6 +46,8 @@ will give you some additional details.
     :status 405: endpoint doesn't support this method
     :status 500: unexpected error
 
+.. _system:
+
 System
 ======
 
@@ -106,10 +108,16 @@ The access token derived from any sign-in method must be scoped for
         An internally created `Firefox Accounts`_ OAuth `authorization code`_.
         This would typically be generated using an internal client ID from
         a login screen on the payments management app.
+    :param string client_id:
+        The `Firefox Accounts`_ client ID that was used to generate the
+        `authorization code`_. This must be one of the internally supported
+        client IDs (which correspond to server domain).
     :param string access_token:
         A third party generated `Firefox Accounts`_ OAuth `access token`_.
         This would typically be generated from an initial sign-in flow
         triggered by an external app that is selling the product.
+        When signing in with an `access_token` there is no need to post an
+        `authorization_code` or `client_id`.
 
     :>json string buyer_uuid: `Solitude buyer`_ uuid identifier
     :>json string buyer_pk: `Solitude buyer`_ pk identifier
@@ -131,7 +139,7 @@ The access token derived from any sign-in method must be scoped for
 .. _`Solitude buyer`: https://solitude.readthedocs.org/en/latest/topics/generic.html#buyers
 .. _`Solitude payment method`: https://solitude.readthedocs.org/en/latest/topics/braintree.html#get--braintree-mozilla-paymethod--method%20id--
 .. _`Django CSRF`: https://docs.djangoproject.com/en/1.8/ref/csrf/
-.. _`Firefox Accounts`: https://wiki.mozilla.org/Identity/Firefox_Accounts
+.. _`Firefox Accounts`: https://developer.mozilla.org/en-US/docs/Mozilla/Tech/Firefox_Accounts
 
 Sign-Out
 ~~~~~~~~
