@@ -31,10 +31,13 @@ class SignInTest(BaseSignInTest):
         self.url = reverse('auth:sign-in')
         self.set_fxa_verify_response()
 
-    def post(self, data=None):
+    def post(self, data=None, headers=None):
+        headers = headers or {'HTTP_ACCEPT_LANGUAGE': 'en-US'}
         if data is None:
             data = {'access_token': self.access_token}
-        return self.json(self.client.post(self.url, data))
+        return self.json(
+            self.client.post(self.url, data, **headers)
+        )
 
     def set_no_payment_methods_yet(self):
         self.solitude.braintree.mozilla.paymethod.get.return_value = []
@@ -95,7 +98,7 @@ class TestSignInView(SignInTest):
         self.solitude.generic.buyer.get_object.assert_called_with(
             uuid='fxa:{u}'.format(u=self.fxa_user_id))
 
-    def test_patch_existing_buyer_with_email(self):
+    def test_patch_existing_buyer_with_data(self):
         self.set_solitude_buyer_getter()
         buyer_patcher = self.set_solitude_buyer_patcher()
 
@@ -104,7 +107,17 @@ class TestSignInView(SignInTest):
 
         buyer_patcher.assert_called_with({
             'email': self.fxa_email,
+            'locale': 'en-US'
         })
+
+    def test_patch_existing_buyer_without_locale(self):
+        self.set_solitude_buyer_getter()
+        buyer_patcher = self.set_solitude_buyer_patcher()
+
+        res, data = self.post(headers={'HTTP_ACCEPT_LANGUAGE': ''})
+        eq_(res.status_code, 200, res)
+
+        buyer_patcher.assert_called_with({'email': self.fxa_email})
 
     def test_create_solitude_buyer(self):
         self.solitude.generic.buyer.get_object.side_effect = ObjectDoesNotExist
@@ -116,8 +129,9 @@ class TestSignInView(SignInTest):
         res, data = self.post()
         eq_(res.status_code, 201, res)
         self.solitude.generic.buyer.post.assert_called_with({
-            'uuid': 'fxa:{u}'.format(u=self.fxa_user_id),
             'email': self.fxa_email,
+            'locale': 'en-US',
+            'uuid': 'fxa:{u}'.format(u=self.fxa_user_id),
         })
 
     def test_save_buyer_data_to_session(self):
