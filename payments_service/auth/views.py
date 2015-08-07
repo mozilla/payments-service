@@ -26,6 +26,7 @@ class SignInView(UnprotectedAPIView):
 
         api = solitude.api()
         created = False
+        locale = request.META.get('HTTP_ACCEPT_LANGUAGE')
         try:
             try:
                 buyer = api.generic.buyer.get_object(uuid=fxa_uuid)
@@ -34,8 +35,9 @@ class SignInView(UnprotectedAPIView):
                     .format(buyer=buyer['uuid'], fxa_uuid=fxa_uuid))
             except ObjectDoesNotExist:
                 buyer = api.generic.buyer.post({
-                    'uuid': fxa_uuid,
                     'email': email,
+                    'locale': locale,
+                    'uuid': fxa_uuid,
                 })
                 log.info(
                     u'created solitude buyer {buyer} for FxA user {fxa_uuid}'
@@ -53,12 +55,19 @@ class SignInView(UnprotectedAPIView):
             return error_400(exception=exc)
 
         if not created:
-            log.info('updating email address {} for user {}'
-                     .format(email, buyer['resource_pk']))
+            log.info('updating email to {} for user {}'
+                     .format(email, locale, buyer['resource_pk']))
             # Pretty soon we can hopefully stop storing the email address.
             # This patch request exists mainly to ease local development but
             # could theoretically handle changing email addresses.
-            api.generic.buyer(buyer['resource_pk']).patch({'email': email})
+            data = {'email': email}
+            # Similarly we can update the locale until we can find a way to
+            # access that from FxA.
+            if locale:
+                log.info('Updating locale to {} for user {}'
+                         .format(locale, buyer['resource_pk']))
+                data['locale'] = locale
+            api.generic.buyer(buyer['resource_pk']).patch(data)
 
         request.session['buyer'] = {
             'pk': buyer['resource_pk'],
