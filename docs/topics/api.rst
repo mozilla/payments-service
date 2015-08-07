@@ -361,7 +361,6 @@ These endpoints allow you to work with Braintree plan subscriptions.
     :status 200: subscriptions returned successfully
 
 .. _`solitude subscriptions`: http://solitude.readthedocs.org/en/latest/topics/braintree.html#get--braintree-mozilla-subscription--subscription%20id--
-.. _`generic product object`: http://solitude.readthedocs.org/en/latest/topics/generic.html#product
 
 .. http:post:: /api/braintree/subscriptions/
 
@@ -421,6 +420,66 @@ These endpoints allow you to work with Braintree plan subscriptions.
 
 .. _`subscription`: http://solitude.readthedocs.org/en/latest/topics/braintree.html#subscriptions
 
+
+Transactions
+~~~~~~~~~~~~~
+
+These endpoints allow you to work with Braintree transactions.
+
+.. http:get:: /api/braintree/transactions/
+
+    Get all transactions for the currently signed in user.
+
+    :>json array transactions:
+        array of solitude transactions with the `transaction` attribute
+        expanded to the `braintree transaction object`_ and the
+        `seller_product` attribute expanded to the `generic product object`_.
+
+    Example:
+
+    .. code-block:: json
+
+        {
+            "transactions": [
+                {
+                    "id": 1,
+                    "resource_pk": 1,
+                    "resource_uri": "/braintree/mozilla/transaction/1/",
+                    "created": "2015-08-07T14:53:23.966",
+                    "modified": "2015-08-07T14:53:23.966",
+                    "kind": "subscription_charged_successfully",
+                    "transaction": {
+                        "resource_pk": 1,
+                        "resource_uri": "/generic/transaction/1/"
+                        "seller_product": {
+                            "resource_pk": 1,
+                            "public_id": "mozilla-concrete-brick",
+                            "seller": "/generic/seller/8/",
+                            "external_id": "mozilla-concrete-brick",
+                            "resource_uri": "/generic/product/1/"
+                        },
+                        "uuid": "bt-b-cLt3FD",
+                        "seller": "/generic/seller/8/",
+                        "provider": 4,
+                        "type": 0,
+                        "status": 2,
+                        "buyer": "/generic/buyer/8/",
+                        "created": "2015-08-07T14:53:24",
+                        "currency": "USD",
+                        "amount": "10.00"
+                    },
+                    "next_billing_period_amount": "10.00",
+                    "paymethod":"/braintree/mozilla/paymethod/1/",
+                    "billing_period_end_date": "2015-09-06T00:00:00",
+                    "next_billing_date":"2015-09-06T00:00:00",
+                    "billing_period_start_date": "2015-08-07T00:00:00",
+                    "subscription": "/braintree/mozilla/subscription/1/"
+                }
+            ]
+        }
+
+    :status 200: transactions returned successfully
+
 Webhooks
 ~~~~~~~~
 
@@ -440,6 +499,8 @@ see the `Braintree documentation <https://developers.braintreepayments.com/javas
 
     This request and response is the same as Solitudes `webhook API`_.
 
+.. _`generic product object`: http://solitude.readthedocs.org/en/latest/topics/generic.html#product
+.. _`braintree transaction object`: http://solitude.readthedocs.org/en/latest/topics/braintree.html#get--braintree-mozilla-transaction--transaction%20id--
 .. _`payment method`: https://solitude.readthedocs.org/en/latest/topics/braintree.html#id2
 .. _`payment methods`: https://solitude.readthedocs.org/en/latest/topics/braintree.html#id2
 .. _`webhook API`: http://solitude.readthedocs.org/en/latest/topics/braintree.html#webhook

@@ -1,13 +1,15 @@
 from urllib import urlencode
 import unittest
 
+import mock
 from nose.tools import eq_, raises
+from rest_framework.response import Response
 from slumber.exceptions import HttpClientError, HttpServerError
 
 from payments_service.base.tests import (
     APIMock, AuthenticatedTestCase, WithDynamicEndpoints)
 
-from .. import SolitudeBodyguard, url_parser
+from .. import SolitudeAPIView, SolitudeBodyguard, url_parser
 
 
 class TestSolitudeBodyguard(AuthenticatedTestCase, WithDynamicEndpoints):
@@ -176,3 +178,68 @@ class TestUrlParser(unittest.TestCase):
     def test_triple_resource_no_pk(self):
         eq_(url_parser('/service/category/thing/'),
             (['service', 'category', 'thing'], None))
+
+
+class TestExpandAPIObjects(AuthenticatedTestCase, WithDynamicEndpoints):
+
+    def setUp(self):
+        super(TestExpandAPIObjects, self).setUp()
+
+        # Set up a fake API result that links to other API results by URI.
+
+        self.solitude.transaction.get.return_value = [{
+            'resource_pk': 1,
+            'product': '/some/product/1234/',
+            'seller': '/some/seller/1234/',
+        }]
+
+        self.uri_mocks = {
+            '/some/product/1234/': mock.Mock(),
+            '/some/category/1234/': mock.Mock(),
+            '/some/seller/1234/': mock.Mock(),
+        }
+
+        self.uri_mocks['/some/product/1234/'].get_object.return_value = {
+            'resource_uri': '/some/product/1234/',
+            'category': '/some/category/1234/',
+        }
+
+        self.uri_mocks['/some/category/1234/'].get_object.return_value = {
+            'resource_uri': '/some/category/1234/',
+        }
+
+        self.uri_mocks['/some/seller/1234/'].get_object.return_value = {
+            'resource_uri': '/some/seller/1234/'
+        }
+
+        self.solitude.by_url.side_effect = (
+            lambda u: self.uri_mocks[u]
+        )
+
+    def execute_expansion(self, to_expand):
+
+        class ExpandingView(SolitudeAPIView):
+
+            def get(self, *args, **kw):
+                res = self.api.transaction.get()
+                res = self.expand_api_objects(res, to_expand)
+                return Response(res)
+
+        self.endpoint(ExpandingView)
+        return self.json(self.client.get('/dynamic-endpoint'))
+
+    def test_expand_top_level_attribute(self):
+        res, data = self.execute_expansion(['seller'])
+        assert self.uri_mocks['/some/seller/1234/'].get_object.called
+        eq_(data[0]['seller']['resource_uri'], '/some/seller/1234/')
+
+    def test_expand_nested_attribute(self):
+        res, data = self.execute_expansion([{'product': ['category']}])
+
+        assert self.uri_mocks['/some/product/1234/'].get_object.called
+        assert self.uri_mocks['/some/category/1234/'].get_object.called
+
+        eq_(data[0]['product']['resource_uri'],
+            '/some/product/1234/')
+        eq_(data[0]['product']['category']['resource_uri'],
+            '/some/category/1234/')
