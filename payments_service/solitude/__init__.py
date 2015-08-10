@@ -44,7 +44,95 @@ class SolitudeAPI(API):
         return super(SolitudeAPI, self).by_url(url, **kw)
 
 
-class SolitudeBodyguard(APIView):
+class SolitudeAPIView(APIView):
+
+    def __init__(self, *args, **kw):
+        super(SolitudeAPIView, self).__init__(*args, **kw)
+        # Get a sys.modules reference so that mocking from tests is easier.
+        from payments_service import solitude
+        self.api = solitude.api()
+
+    def expand_api_objects(self, objects, to_expand):
+        """
+        Given a list of API result dictionaries, expand URIs to sub-objects.
+
+        For example, this API result:
+
+            {
+                "resource_pk": 1,
+                "transaction_uri": "/api/transaction/1234/",
+            }
+
+        will be expanded to:
+
+            {
+                "resource_pk": 1,
+                "transaction_uri": {
+                    "resource_pk": 1234,
+                    ...
+                }
+            }
+
+        `to_expand` is a list or dict of result attributes that are
+        solitude URIs. Each one will be loaded so that the final value
+        contains the sub-object.
+
+        Example of expanding two columns:
+
+            self.expand_api_objects(objects, ['transaction_uri',
+                                              'seller_uri'])
+
+        Example of expanding the 'product_uri' column which is nested within
+        the transaction_uri response:
+
+            self.expand_api_objects(objects,
+                                    [{'transaction_uri': ['product_uri']}])
+
+        """
+
+        def expand(leaf, to_expand):
+            log.debug('expanding {} within {}'.format(to_expand, leaf))
+            # Make a map of attributes that we need to expand and their
+            # corresponding value. If the value is a dict, it will
+            # indicate nested expansion.
+            attr_map = {}
+            for a in to_expand:
+                if isinstance(a, dict):
+                    for sub_key in a:
+                        attr_map[sub_key] = a
+                else:
+                    attr_map[a] = None
+
+            for attr, uri in leaf.iteritems():
+                if attr in attr_map:
+                    # TODO: adjust Solitude's output so that we don't have to
+                    # make sub requests.
+                    log.info('expanding object result by calling URI "{}": {}'
+                             .format(attr, uri))
+                    sub_objects = self.api.by_url(uri).get_object()
+                    leaf[attr] = sub_objects
+
+                    # Check if the mapped attribute has nested expansions.
+                    if isinstance(attr_map[attr], dict):
+                        # To detect nesting easier, the attribute mapping links
+                        # to the actual expansion.
+                        # For example, to expand product within transaction,
+                        # it would be mapped like:
+                        # {"transaction": {"transaction": ["product"]}}
+                        # This is different from a single level
+                        # attribute (no nesting) which would look like:
+                        # {"transaction": None}
+                        expand(sub_objects, attr_map[attr][attr])
+
+        if not isinstance(objects, list):
+            raise TypeError('expected a list of objects to expand')
+        for sub in objects:
+            expand(sub, to_expand)
+
+        return objects
+
+
+class SolitudeBodyguard(SolitudeAPIView):
     """
     API view that proxies a single call downstream to Solitude
     with some restrictions.
@@ -154,7 +242,7 @@ class SolitudeBodyguard(APIView):
             api().services.object(pk)
 
         """
-        resource = api()
+        resource = self.api
         url_paths = self.resource.split('.')
         while len(url_paths):
             resource = getattr(resource, url_paths.pop(0))

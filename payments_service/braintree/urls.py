@@ -6,6 +6,7 @@ from .views.subscriptions import (
 from .views.token_generator import TokenGenerator
 from .views.paymethod import (BraintreePayMethod, DeleteBraintreePayMethod,
                               PayMethod)
+from .views.transactions import Transactions
 from .views.webhook import debug_email, Webhook
 
 
@@ -18,6 +19,8 @@ urlpatterns = patterns(
     url(r'^subscriptions/paymethod/change/$',
         ChangeSubscriptionPayMethod.as_view(),
         name='subscriptions.paymethod.change'),
+    url(r'^transactions/$', Transactions.as_view(),
+        name='transactions'),
     url(r'^token/generate/$', TokenGenerator.as_view(), name='token.generate'),
     url(r'^paymethod/$', BraintreePayMethod.as_view(), name='paymethod'),
     url(r'^paymethod/delete/$', DeleteBraintreePayMethod.as_view(),
