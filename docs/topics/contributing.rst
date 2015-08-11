@@ -50,6 +50,27 @@ run::
 Then go back to your host machine (not docker) and open ``docs/_build/html/index.html``
 from your `payments-service` source directory.
 
+Configuring Firefox Accounts
+============================
+
+The management API endpoints support a user/password sign-in through Firefox
+Accounts. This is pre-configured for development but if you are deploying to
+a custom domain then you'll need to `create a Firefox Accounts Oauth client`_
+(using the dashboard for the right server) then define the following
+environment variables. Make sure your client is marked as *trusted* so that
+the user can sign in without having to grant explicit permission.
+
+**SERVICE_FXA_CREDENTIALS**
+    Colon separated string of ``fxa_client_id:fxa_secret``. For example:
+    ``a63657a4c78dd650:b18c1a8d6797f00b...``
+
+**SERVICE_FXA_OAUTH_URL**
+    URL to the `Firefox Accounts Oauth server`_. By default this is set to the
+    development instance of the production release.
+
+.. _`create a Firefox Accounts Oauth client`: https://oauth-stable.dev.lcip.org/console/clients
+.. _`Firefox Accounts Oauth server`: https://github.com/mozilla/fxa-oauth-server/
+
 Sending email
 =============
 

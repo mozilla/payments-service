@@ -218,25 +218,33 @@ SOLITUDE_URL = os.environ.get('SOLITUDE_URL', 'http://solitude:2602')
 SOLITUDE_KEY = 'payments-service'
 SOLITUDE_SECRET = 'please change this'
 
+env_creds = os.environ.get('SERVICE_FXA_CREDENTIALS')
+if env_creds:
+    if ':' not in env_creds:
+        raise EnvironmentError(
+            'SERVICE_FXA_CREDENTIALS must be a colon separated string of '
+            'fxa_client_id:fxa_secret')
+    client_id, secret = env_creds.split(':')
+    FXA_CREDENTIALS = {client_id: secret}
+else:
+    # Management app credentials, only used in developemnt.
+    FXA_CREDENTIALS = {
+        # FxA client for http://pay.dev
+        # https://oauth-stable.dev.lcip.org/console/client/8d7c6c8549cc6deb
+        '8d7c6c8549cc6deb': (
+            'b18c1a8d6797f00b88d5da1df57ae01c0c3cc2ed5309e8112bccae03d59e4286'
+        ),
+        # FxA client for http://pay.webpack:8080
+        # https://oauth-stable.dev.lcip.org/console/client/a63657a4c78dd650
+        'a63657a4c78dd650': (
+            '41172a687037eea958eed0853c2fb3e441b0dd209bc459219a636cbd0e537ad0'
+        ),
+    }
+
 # Firefox Accounts OAuth server to use.
 # https://github.com/mozilla/fxa-oauth-server/
-FXA_OAUTH_URL = 'https://oauth-stable.dev.lcip.org'
-
-
-# Management app credentials, only used in developemnt.
-# The dictionary structure is ID: secret.
-FXA_CREDENTIALS = {
-    # FxA client for http://pay.dev
-    # https://oauth-stable.dev.lcip.org/console/client/8d7c6c8549cc6deb
-    '8d7c6c8549cc6deb': (
-        'b18c1a8d6797f00b88d5da1df57ae01c0c3cc2ed5309e8112bccae03d59e4286'
-    ),
-    # FxA client for http://pay.webpack:8080
-    # https://oauth-stable.dev.lcip.org/console/client/a63657a4c78dd650
-    'a63657a4c78dd650': (
-        '41172a687037eea958eed0853c2fb3e441b0dd209bc459219a636cbd0e537ad0'
-    ),
-}
+FXA_OAUTH_URL = (os.environ.get('SERVICE_FXA_OAUTH_URL') or
+                 'https://oauth-stable.dev.lcip.org')
 
 
 # When emailing buyers about their subscriptions, this
