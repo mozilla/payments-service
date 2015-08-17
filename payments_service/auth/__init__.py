@@ -46,10 +46,10 @@ class SessionUserAuthentication(authentication.SessionAuthentication):
 
     def authenticate(self, request):
         if not request.session.get('buyer'):
-            log.debug('auth failed: buyer not in session')
+            log.debug('auth: setting user to None, buyer not in session')
             user = None
         else:
-            log.debug('auth success: buyer in session')
+            log.debug('auth: setting user to buyer from session')
             user = SolitudeBuyer(request.session['buyer']['uuid'],
                                  request.session['buyer']['pk'])
 
