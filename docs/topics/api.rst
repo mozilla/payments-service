@@ -138,7 +138,6 @@ The access token derived from any sign-in method must be scoped for
 .. _`authorization code`: https://github.com/mozilla/fxa-oauth-server/blob/master/docs/api.md#post-v1authorization
 .. _`Solitude buyer`: https://solitude.readthedocs.org/en/latest/topics/generic.html#buyers
 .. _`Solitude payment method`: https://solitude.readthedocs.org/en/latest/topics/braintree.html#get--braintree-mozilla-paymethod--method%20id--
-.. _`Django CSRF`: https://docs.djangoproject.com/en/1.8/ref/csrf/
 .. _`Firefox Accounts`: https://developer.mozilla.org/en-US/docs/Mozilla/Tech/Firefox_Accounts
 
 Sign-Out
@@ -161,9 +160,8 @@ Token Generator
 ~~~~~~~~~~~~~~~
 
 To begin a payment you need to call this endpoint to `retrieve a token`_
-for the client.
-
-.. _`retrieve a token`: https://developers.braintreepayments.com/javascript+python/reference/request/client-token/generate
+for the client. To support anonymous payments such as donations, this endpoint
+does not require user authentication.
 
 .. http:post:: /api/braintree/token/generate/
 
@@ -172,12 +170,18 @@ for the client.
     .. code-block:: json
 
         {
-            "token": "ABC123"
+            "token": "ABC123",
+            "csrf_token": "b026324c6904b2a9cb4b88d6d61c81d1"
         }
 
-    This response is exactly the same as Solitude's
-    `token generator`_
+    :>json string token: Braintree token, returned from Solitude's
+        `token generator`_, that can be used to initialize a payment form.
+    :>json string csrf_token: `Django CSRF`_ token string to protect against
+        cross site request forgery. You must include this in all subsequent
+        requests using the ``X-CSRFToken`` request header.
 
+
+.. _`retrieve a token`: https://developers.braintreepayments.com/javascript+python/reference/request/client-token/generate
 .. _`token generator`: https://solitude.readthedocs.org/en/latest/topics/braintree.html#generate-a-token
 .. _`Solitude`: https://github.com/mozilla/solitude/
 
@@ -499,6 +503,7 @@ see the `Braintree documentation <https://developers.braintreepayments.com/javas
 
     This request and response is the same as Solitudes `webhook API`_.
 
+.. _`Django CSRF`: https://docs.djangoproject.com/en/1.8/ref/csrf/
 .. _`generic product object`: http://solitude.readthedocs.org/en/latest/topics/generic.html#product
 .. _`braintree transaction object`: http://solitude.readthedocs.org/en/latest/topics/braintree.html#get--braintree-mozilla-transaction--transaction%20id--
 .. _`payment method`: https://solitude.readthedocs.org/en/latest/topics/braintree.html#id2
