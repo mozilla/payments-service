@@ -12,7 +12,7 @@ class TokenGenerator(UnprotectedAPIView):
     """
 
     def post(self, request):
-        bt_data = solitude.api().braintree.token.generate.post()
+        bt_data = solitude.api().braintree.token.generate.post({})
 
         # Generate a new token for added security.
         csrf.rotate_token(request)
