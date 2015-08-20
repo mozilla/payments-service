@@ -6,7 +6,8 @@ from rest_framework.views import APIView
 
 class UnprotectedAPIView(APIView):
     """
-    APIView that does not require the user to be logged in.
+    APIView that does not require the user to be signed in *and*
+    does not require CSRF verification.
     """
     authentication_classes = []
     permission_classes = [AllowAny]

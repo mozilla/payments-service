@@ -6,12 +6,14 @@ from .views.subscriptions import (
 from .views.token_generator import TokenGenerator
 from .views.paymethod import (BraintreePayMethod, DeleteBraintreePayMethod,
                               PayMethod)
+from .views.sale import Sale
 from .views.transactions import Transactions
 from .views.webhook import debug_email, Webhook
 
 
 urlpatterns = patterns(
     '',
+    url(r'^sale/$', Sale.as_view(), name='sale'),
     url(r'^subscriptions/$', Subscriptions.as_view(),
         name='subscriptions'),
     url(r'^subscriptions/cancel/$', CancelSubscription.as_view(),
