@@ -1,6 +1,7 @@
 import logging
 
 from django.core.exceptions import ObjectDoesNotExist
+from django.utils.translation import ugettext as _
 
 from .. import solitude
 
@@ -28,3 +29,15 @@ def user_owns_resource(uri, lookup):
              .format(owns_resource, uri, lookup))
 
     return owns_resource
+
+
+def recurring_amount(product):
+    """
+    Returns a suitable string for the amount and recurrence,
+    e.g. $5.00 per month.
+    """
+    # TODO: format the amount properly.
+    result = '${product.amount}'
+    if product.recurrence == 'monthly':
+        result = _('${product.amount} per month')
+    return result.format(product=product)

@@ -56,8 +56,8 @@ oauthlib==0.7.2
 # sha256: PWMqzIaGoHullsTeJTJxG3s2D4jECiiIE5WqIUn718g
 oauth2==1.5.211
 
-# sha256: O7dll_0Xuq0ER-6Ribo6j1PUuXgU7q62DLm4Thr3Hds
-payments-config==0.0.10
+# sha256: ogcDHY1RGrz8PN7rJ5R0JhXujEZasdbDXqJNwRyWr5w
+payments-config==0.0.12
 
 # sha256: mG9LKd89WZeR-lvFXoRs6fY-q8fm8ZsrNNb0mPCdqQ8
 pyasn1==0.1.8
