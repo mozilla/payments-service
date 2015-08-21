@@ -103,12 +103,6 @@ class SaleForm(forms.Form):
         self.user = user
         super(SaleForm, self).__init__(*args, **kwargs)
 
-    def clean(self):
-        cleaned_data = super(SaleForm, self).clean()
-        if not cleaned_data.get('paymethod') and not cleaned_data.get('nonce'):
-            raise forms.ValidationError(
-                'either a payment nonce or paymethod URI is required')
-
     def clean_paymethod(self):
         paymethod = self.cleaned_data.get('paymethod')
         if not paymethod:

@@ -100,13 +100,6 @@ class TestSaleForm(PaymentFormTest):
     def test_valid(self):
         self.submit()
 
-    def test_no_valid_pay_method(self):
-        form = self.submit(overrides={'nonce': None, 'paymethod': None},
-                           expect_errors=True)
-        assert '__all__' in form.errors, (
-            form.errors.as_text()
-        )
-
     def test_paymethod_requires_sign_in(self):
         form = self.submit_paymethod(
             # Pretend this is a form submission without sign-in.
