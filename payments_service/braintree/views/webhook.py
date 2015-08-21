@@ -15,6 +15,7 @@ from slumber.exceptions import HttpClientError
 
 from payments_service import solitude
 from payments_service.base.views import error_403, UnprotectedAPIView
+from payments_service.braintree.utils import recurring_amount
 
 log = logging.getLogger(__name__)
 
@@ -84,6 +85,7 @@ class Webhook(UnprotectedAPIView):
             'moz_trans': moz_trans,
             'next_pay_date': parsed_date(bt_trans['next_billing_date']),
             'product': product,
+            'recurring_amount': recurring_amount,
             'root_url': settings.EMAIL_URL_ROOT,
             'seller': product.seller,
             'transaction': moz_trans,
