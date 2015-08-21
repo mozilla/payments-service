@@ -318,6 +318,25 @@ for the currently signed in user.
     :status 200: response processed successfully.
 
 
+Sale
+~~~~
+
+.. http:post:: /api/braintree/sale/
+
+    This endpoint lets you create a one-time payment with the Braintree API.
+
+    The input parameters are exactly the same as the `Solitude Sale API`_.
+    Here are some additional notes:
+
+    - This is not an auth protected end point. The user may make a payment
+      anonymously as long as the product supports it.
+    - If paying with a ``paymethod`` URI (a saved payment method) then the user
+      must be signed in and must be the owner of that payment method.
+
+    :status 204: sale submitted successfully
+
+.. _`Solitude Sale API`: http://solitude.readthedocs.org/en/latest/topics/braintree.html#post--braintree-sale-
+
 Subscriptions
 ~~~~~~~~~~~~~
 

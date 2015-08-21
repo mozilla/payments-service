@@ -3,6 +3,7 @@ import logging
 from django.conf import settings
 
 from curling.lib import API
+from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from slumber.exceptions import HttpClientError
@@ -130,6 +131,15 @@ class SolitudeAPIView(APIView):
             expand(sub, to_expand)
 
         return objects
+
+
+class AnonymousSolitudeAPIView(SolitudeAPIView):
+    """
+    A Solitude API view that can be accessed with or without sign-in.
+
+    The view is still CSRF protected.
+    """
+    permission_classes = [AllowAny]
 
 
 class SolitudeBodyguard(SolitudeAPIView):

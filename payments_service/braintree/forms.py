@@ -82,3 +82,43 @@ class DeletePayMethodForm(forms.Form):
                 'paymethod by URI does not exist or belongs to another user'
             )
         return uri
+
+
+class SaleForm(forms.Form):
+    """
+    Input data for subscribing a user to a Braintree plan.
+    """
+    # A single use token representing the buyer's submitted payment method.
+    nonce = forms.CharField(max_length=255, required=False)
+    # Solitude URI to an existing payment method for this buyer.
+    paymethod = forms.CharField(max_length=255, required=False)
+    # ID from payments-config.
+    product_id = forms.CharField(max_length=255)
+    # A variable amount to pay for the product. This only applies to products
+    # like donations.
+    amount = forms.DecimalField(required=False)
+
+    def __init__(self, user, *args, **kwargs):
+        # This is the currently signed in user. It may be None.
+        self.user = user
+        super(SaleForm, self).__init__(*args, **kwargs)
+
+    def clean_paymethod(self):
+        paymethod = self.cleaned_data.get('paymethod')
+        if not paymethod:
+            return
+
+        if not self.user:
+            raise forms.ValidationError(
+                'user must be signed-in to submit payment with a '
+                'saved pay method')
+
+        if not utils.user_owns_resource(
+            paymethod,
+            {'braintree_buyer__buyer__uuid': self.user.uuid},
+        ):
+            raise forms.ValidationError(
+                'paymethod by URI does not exist or belongs to another user'
+            )
+
+        return paymethod
