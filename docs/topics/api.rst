@@ -330,8 +330,6 @@ Sale
 
     - This is not an auth protected end point. The user may make a payment
       anonymously as long as the product supports it.
-    - If the user is signed in, the payment token will be saved for use in
-      future payments.
     - If paying with a ``paymethod`` URI (a saved payment method) then the user
       must be signed in and must be the owner of that payment method.
 

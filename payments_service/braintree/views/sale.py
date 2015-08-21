@@ -32,14 +32,4 @@ class Sale(AnonymousSolitudeAPIView):
             log.debug('caught bad request from solitude: {}'.format(exc))
             return error_400(exception=exc)
 
-        if request.user and form.cleaned_data['nonce']:
-            # Since the user is signed in, save this new payment method
-            # for use in future payments.
-            pay_method = self.api.braintree.paymethod.post({
-                'buyer_uuid': request.user.uuid,
-                'nonce': form.cleaned_data['nonce'],
-            })
-            log.info('saved pay method {} for user {}'
-                     .format(pay_method, request.user))
-
         return Response({}, status=204)

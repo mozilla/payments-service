@@ -49,25 +49,6 @@ class TestSale(AuthenticatedTestCase):
         eq_(args['paymethod'], paymethod)
         eq_(args['nonce'], '')
 
-    def test_save_pay_method_when_signed_in(self):
-        res, data = self.post()
-        eq_(res.status_code, 204)
-        self.solitude.braintree.paymethod.post.assert_called_with({
-            'buyer_uuid': self.buyer_uuid,
-            'nonce': self.default_data['nonce'],
-        })
-
-    def test_do_not_save_pay_method_when_signed_out(self):
-        self.client.logout()
-        res, data = self.post()
-        eq_(res.status_code, 204)
-        assert not self.solitude.braintree.paymethod.post.called
-
-    def test_do_not_save_uri_pay_methods(self):
-        res, data = self.post(nonce='', paymethod='/some/paymethod/123/')
-        eq_(res.status_code, 204)
-        assert not self.solitude.braintree.paymethod.post.called
-
     def test_bad_solitude_request(self):
         exc = HttpClientError('bad request')
         exc.content = {'product_id': ['Invalid product.']}
