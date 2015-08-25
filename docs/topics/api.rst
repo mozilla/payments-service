@@ -404,6 +404,10 @@ These endpoints allow you to work with Braintree plan subscriptions.
     :param string plan_id:
         Braintree subscription `plan ID`_. If the logged in user is already
         subscribed to this plan, you'll get an error.
+    :param string amount:
+        Custom payment amount as a decimal string.
+        This only applies to subscription plans that allow
+        custom amounts such as recurring donations.
 
     **Response**
 
