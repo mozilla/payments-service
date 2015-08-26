@@ -134,8 +134,8 @@ The access token derived from any sign-in method must be scoped for
     :status 200: returning buyer authenticated successfully.
     :status 201: first time buyer authenticated successfully.
 
-.. _`access token`: https://github.com/mozilla/fxa-oauth-server/blob/master/docs/api.md#post-v1token
-.. _`authorization code`: https://github.com/mozilla/fxa-oauth-server/blob/master/docs/api.md#post-v1authorization
+.. _`access token`: https://github.com/mozilla/fxa-oauth-server/blob/master/docs/api.md#user-content-post-v1token
+.. _`authorization code`: https://github.com/mozilla/fxa-oauth-server/blob/master/docs/api.md#user-content-post-v1authorization
 .. _`Solitude buyer`: https://solitude.readthedocs.org/en/latest/topics/generic.html#buyers
 .. _`Solitude payment method`: https://solitude.readthedocs.org/en/latest/topics/braintree.html#get--braintree-mozilla-paymethod--method%20id--
 .. _`Firefox Accounts`: https://developer.mozilla.org/en-US/docs/Mozilla/Tech/Firefox_Accounts
@@ -182,7 +182,7 @@ does not require user authentication.
 
 
 .. _`retrieve a token`: https://developers.braintreepayments.com/javascript+python/reference/request/client-token/generate
-.. _`token generator`: https://solitude.readthedocs.org/en/latest/topics/braintree.html#generate-a-token
+.. _`token generator`: https://solitude.readthedocs.org/en/latest/topics/braintree.html#post--braintree-token-generate-
 .. _`Solitude`: https://github.com/mozilla/solitude/
 
 Payment Methods
@@ -507,7 +507,7 @@ Webhooks
 ~~~~~~~~
 
 When Braintree completes certain actions, webhooks will be sent. For more information
-see the `Braintree documentation <https://developers.braintreepayments.com/javascript+python/reference/general/webhooks>`_.
+see the `Braintree documentation <https://developers.braintreepayments.com/javascript+python/reference/general/webhooks/overview>`_.
 
 .. http:get:: /api/braintree/webhook/
 

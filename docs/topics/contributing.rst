@@ -96,7 +96,7 @@ Debugging HTML email is hard. To see what an email looks like, you must first:
 
 Ensure that ``DEBUG`` is enabled for payments-service.
 
-Visit: http://pay.dev:8000/api/braintree/webhook/email/debug/
+Visit: ``http://pay.dev:8000/api/braintree/webhook/email/debug/``
 
 Parameters:
 * ``kind``: the kind of email to generate, matches the names of the webhooks for the `braintree_webhook`_ command. Default: ``subscription_charged_successfully``
