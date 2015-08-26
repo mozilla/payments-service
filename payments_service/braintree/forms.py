@@ -17,6 +17,10 @@ class SubscriptionForm(forms.Form):
     pay_method_uri = forms.CharField(max_length=255, required=False)
     # Braintree subscription plan ID.
     plan_id = forms.CharField(max_length=255)
+    # A custom amount to pay for the subscription. This only applies to
+    # things like recurring donations. Solitude validates this value to make
+    # sure you can't adjust fixed price subscriptions.
+    amount = forms.DecimalField(required=False)
 
     def clean(self):
         cleaned_data = super(SubscriptionForm, self).clean()
@@ -94,7 +98,7 @@ class SaleForm(forms.Form):
     paymethod = forms.CharField(max_length=255, required=False)
     # ID from payments-config.
     product_id = forms.CharField(max_length=255)
-    # A variable amount to pay for the product. This only applies to products
+    # A custom amount to pay for the product. This only applies to products
     # like donations.
     amount = forms.DecimalField(required=False)
 

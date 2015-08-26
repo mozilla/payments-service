@@ -1,3 +1,5 @@
+from decimal import Decimal
+
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.urlresolvers import reverse
 
@@ -79,10 +81,9 @@ class TestSubscribe(AuthenticatedTestCase):
         res, data = self.post()
         eq_(res.status_code, 204, res)
 
-        self.solitude.braintree.subscription.post.assert_called_with({
-            'paymethod': pay_method_uri,
-            'plan': self.plan_id,
-        })
+        args = self.solitude.braintree.subscription.post.call_args[0][0]
+        eq_(args['paymethod'], pay_method_uri)
+        eq_(args['plan'], self.plan_id)
 
     def test_with_existing_pay_method(self):
         self.setup_generic_buyer()
@@ -93,10 +94,9 @@ class TestSubscribe(AuthenticatedTestCase):
                                     'plan_id': self.plan_id})
         eq_(res.status_code, 204, res)
 
-        self.solitude.braintree.subscription.post.assert_called_with({
-            'paymethod': pay_method_uri,
-            'plan': self.plan_id,
-        })
+        args = self.solitude.braintree.subscription.post.call_args[0][0]
+        eq_(args['paymethod'], pay_method_uri)
+        eq_(args['plan'], self.plan_id)
 
     def test_too_many_pay_methods(self):
         self.setup_generic_buyer()
@@ -132,6 +132,17 @@ class TestSubscribe(AuthenticatedTestCase):
         res, data = self.post()
         self.assert_form_error(res, ['__all__'])
         assert self.solitude.braintree.mozilla.subscription.get.called
+
+    def test_pay_a_custom_amount(self):
+        self.setup_generic_buyer()
+        self.setup_no_subscription_yet()
+        self.expect_new_pay_method()
+
+        res, data = self.post(amount='1.99')
+        eq_(res.status_code, 204, res)
+
+        args = self.solitude.braintree.subscription.post.call_args[0][0]
+        eq_(args['amount'], Decimal('1.99'))
 
 
 class SubscriptionTest(AuthenticatedTestCase):
