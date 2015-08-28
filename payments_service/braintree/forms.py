@@ -2,7 +2,6 @@ import logging
 import uuid
 
 from django import forms
-from django.core.exceptions import ObjectDoesNotExist
 import payments_config
 
 from payments_service import solitude
@@ -83,14 +82,12 @@ class SubscriptionForm(forms.Form):
                     'signing in first.'
                 )
             )
-        try:
-            self.user = self.reuse_existing_email_buyer(email)
-            log.info('Re-using email-only buyer for email '
-                     '{} and plan {}'.format(email, product.id))
-        except ObjectDoesNotExist:
-            log.info('Creating email-only buyer for email '
-                     '{} and plan {}'.format(email, product.id))
-            self.user = self.create_email_only_buyer(email)
+        # TODO: this is currently not exactly right. This ignores the fact
+        # that an authenticated buyer with this same email may exist in the
+        # system so it would be bad to create a new one.
+        log.info('Creating email-only buyer for email '
+                 '{} and plan {}'.format(email, product.id))
+        self.user = self.create_email_only_buyer(email)
 
     def create_email_only_buyer(self, email):
         api = solitude.api()
@@ -101,18 +98,6 @@ class SubscriptionForm(forms.Form):
         })
         log.info('Created email-only buyer {} for email {}'
                  .format(buyer['uuid'], email))
-        return self.user_from_api(buyer)
-
-    def reuse_existing_email_buyer(self, email):
-        api = solitude.api()
-        buyer = api.generic.buyer.get_object_or_404(email=email)
-        if buyer['authenticated']:
-            log.info('Buyer account for {email} has already been '
-                     'authenticated'.format(email=email))
-            raise forms.ValidationError(
-                'Cannot subscribe with this email because the '
-                'account requires sign-in.'
-            )
         return self.user_from_api(buyer)
 
     def user_from_api(self, buyer_api_result):

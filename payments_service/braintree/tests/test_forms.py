@@ -107,28 +107,6 @@ class TestSubscriptionForm(WithFakePaymentsConfig, PaymentFormTest):
         )
         eq_(form.user.uuid, 'created-uuid')
 
-    def test_reuse_email_buyer_if_not_authenticated(self):
-        self.expect_existing_buyer(uuid='existing-uuid',
-                                   authenticated=False)
-        email = 'someone@somewhere.org'
-        form = self.submit(
-            user=False,
-            overrides=dict(plan_id='org-recurring-donation',
-                           email=email))
-        eq_(form.user.uuid, 'existing-uuid')
-        assert not self.solitude.generic.buyer.post.called
-
-    def test_cannot_reuse_email_buyer_if_they_were_authenticated(self):
-        self.expect_existing_buyer(authenticated=True)
-        form = self.submit(
-            expect_errors=True,
-            user=False,
-            overrides=dict(plan_id='org-recurring-donation',
-                           email='someone@somewhere.org'))
-        self.assert_form_error(
-            form.errors, '__all__',
-            msg='Cannot subscribe with this email')
-
     def test_recurring_donation_requires_email(self):
         form = self.submit(
             expect_errors=True,
