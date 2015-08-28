@@ -4,14 +4,14 @@ import mock
 from nose.tools import eq_
 
 from payments_service.auth import SolitudeBuyer
-from payments_service.base.tests import WithFakePaymentsConfig
+from payments_service.base.tests import FormTest, WithFakePaymentsConfig
 
 from .test_views.test_subscriptions import ExistingSubscriptionTest
 from ..forms import (ChangeSubscriptionPayMethodForm,
                      ManageSubscriptionForm, SaleForm, SubscriptionForm)
 
 
-class PaymentFormTest(ExistingSubscriptionTest):
+class PaymentFormTest(ExistingSubscriptionTest, FormTest):
 
     def setUp(self):
         super(PaymentFormTest, self).setUp()
@@ -71,9 +71,9 @@ class TestSubscriptionForm(WithFakePaymentsConfig, PaymentFormTest):
             overrides=dict(pay_method_uri='/my/saved/paymethod',
                            pay_method_nonce='some-nonce'),
         )
-        assert '__all__' in form.errors, (
-            form.errors.as_text()
-        )
+        self.assert_form_error(
+            form.errors, '__all__',
+            msg='Either pay_method_nonce or pay_method_uri can be submitted')
 
     def test_missing_pay_method(self):
         form = self.submit(
@@ -81,9 +81,9 @@ class TestSubscriptionForm(WithFakePaymentsConfig, PaymentFormTest):
             overrides=dict(pay_method_uri=None,
                            pay_method_nonce=None),
         )
-        assert '__all__' in form.errors, (
-            form.errors.as_text()
-        )
+        self.assert_form_error(
+            form.errors, '__all__',
+            msg='Either pay_method_nonce or pay_method_uri can be submitted')
 
     def test_email_only_recurring_donation_creates_user(self):
         self.expect_non_existant_buyer()
@@ -125,26 +125,26 @@ class TestSubscriptionForm(WithFakePaymentsConfig, PaymentFormTest):
             user=False,
             overrides=dict(plan_id='org-recurring-donation',
                            email='someone@somewhere.org'))
-        assert '__all__' in form.errors, (
-            form.errors.as_text()
-        )
+        self.assert_form_error(
+            form.errors, '__all__',
+            msg='Cannot subscribe with this email')
 
     def test_recurring_donation_requires_email(self):
         form = self.submit(
             expect_errors=True,
             user=False,
             overrides=dict(plan_id='org-recurring-donation'))
-        assert 'plan_id' in form.errors, (
-            form.errors.as_text()
-        )
+        self.assert_form_error(
+            form.errors, 'plan_id',
+            msg='.*email cannot be empty')
 
     def test_cannot_subscribe_to_an_unknown_plan(self):
         form = self.submit(
             expect_errors=True,
             overrides=dict(plan_id='non-existant-plan'))
-        assert 'plan_id' in form.errors, (
-            form.errors.as_text()
-        )
+        self.assert_form_error(
+            form.errors, 'plan_id',
+            msg='Unrecoginized plan_id')
 
     def test_email_only_user_cannot_subscribe_to_an_auth_protected_plan(self):
         form = self.submit(
@@ -152,9 +152,9 @@ class TestSubscriptionForm(WithFakePaymentsConfig, PaymentFormTest):
             user=False,
             overrides=dict(plan_id='service-subscription',
                            email='someone@somewhere.org'))
-        assert 'plan_id' in form.errors, (
-            form.errors.as_text()
-        )
+        self.assert_form_error(
+            form.errors, 'plan_id',
+            msg='You cannot subscribe to this plan')
         assert not self.solitude.generic.buyer.post.called
 
 
@@ -176,9 +176,9 @@ class TestManageSubscriptionForm(PaymentFormTest):
         self.user_owns_resource.return_value = False
 
         form = self.submit(expect_errors=True)
-        assert 'subscription_uri' in form.errors, (
-            form.errors.as_text()
-        )
+        self.assert_form_error(
+            form.errors, 'subscription_uri',
+            msg='subscription.*belongs to another user')
 
 
 class TestChangeSubscriptionPayMethodForm(PaymentFormTest):
@@ -200,9 +200,9 @@ class TestChangeSubscriptionPayMethodForm(PaymentFormTest):
         self.user_owns_resource.return_value = False
 
         form = self.submit(expect_errors=True)
-        assert 'new_pay_method_uri' in form.errors, (
-            form.errors.as_text()
-        )
+        self.assert_form_error(
+            form.errors, 'new_pay_method_uri',
+            msg='paymethod.*belongs to another user')
 
 
 class TestSaleForm(PaymentFormTest):
@@ -228,14 +228,14 @@ class TestSaleForm(PaymentFormTest):
             user=False,
             expect_errors=True,
         )
-        assert 'paymethod' in form.errors, (
-            form.errors.as_text()
-        )
+        self.assert_form_error(
+            form.errors, 'paymethod',
+            msg='user must be signed-in')
 
     def test_cannot_steal_someones_pay_method(self):
         self.user_owns_resource.return_value = False
 
         form = self.submit_paymethod(expect_errors=True)
-        assert 'paymethod' in form.errors, (
-            form.errors.as_text()
-        )
+        self.assert_form_error(
+            form.errors, 'paymethod',
+            msg='paymethod.*belongs to another user')

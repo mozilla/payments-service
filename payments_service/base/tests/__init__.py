@@ -1,4 +1,5 @@
 import json
+import re
 
 from django.conf import settings
 from django.conf.urls import patterns, url
@@ -157,6 +158,35 @@ fake_payments_config = {
         ]
     },
 }
+
+
+class FormTest(TestCase):
+    """
+    A mixin for tests directly against form objects.
+    """
+
+    def assert_form_error(self, errors, error_key, msg=None):
+        """
+        Make assertions about a form error
+
+        **errors**
+            The ``form.errors`` property
+        **error_key**
+            The field name or ``__all__`` error key
+        **msg=None**
+            An optional regular expression pattern that will be
+            used to check the error message.
+        """
+        assert error_key in errors, (
+            'error_key {} not in {}'.format(error_key, errors.as_text())
+        )
+        if msg:
+            actual_msg = ', '.join(e.message for e in
+                                   errors.as_data()[error_key])
+            assert re.match(msg, actual_msg), (
+                'error message "{}" did not match pattern "{}"'
+                .format(actual_msg, msg)
+            )
 
 
 class WithFakePaymentsConfig(TestCase):
