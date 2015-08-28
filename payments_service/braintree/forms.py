@@ -84,7 +84,8 @@ class SubscriptionForm(forms.Form):
             )
         # TODO: this is currently not exactly right. This ignores the fact
         # that an authenticated buyer with this same email may exist in the
-        # system so it would be bad to create a new one.
+        # system; it might create a buyer with a duplicate email.
+        # https://github.com/mozilla/payments-service/issues/151
         log.info('Creating email-only buyer for email '
                  '{} and plan {}'.format(email, product.id))
         self.user = self.create_email_only_buyer(email)

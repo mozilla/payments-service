@@ -19,6 +19,6 @@ def set_up_braintree_customer(buyer):
         log.info('using existing braintree customer tied to buyer {b}'
                  .format(b=buyer))
     except ObjectDoesNotExist:
-        log.info('creating new braintree customer for {buyer}'
-                 .format(buyer=buyer['resource_pk']))
         api.braintree.customer.post({'uuid': buyer['uuid']})
+        log.info('created new braintree customer for {buyer}'
+                 .format(buyer=buyer['resource_pk']))
