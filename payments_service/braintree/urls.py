@@ -21,8 +21,6 @@ urlpatterns = patterns(
         composed_view({
             'get': RetrieveSubscriptions.as_view(),
             'post': CreateSubscriptions.as_view(),
-            # TODO: I think I need 'options' for CORS. This is a note to self
-            # so I can test it before merging.
         }), name='subscriptions'),
     url(r'^subscriptions/cancel/$', CancelSubscription.as_view(),
         name='subscriptions.cancel'),

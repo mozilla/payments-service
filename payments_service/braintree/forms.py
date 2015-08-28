@@ -27,7 +27,7 @@ class SubscriptionForm(forms.Form):
     # things like recurring donations. Solitude validates this value to make
     # sure you can't adjust fixed price subscriptions.
     amount = forms.DecimalField(required=False)
-    email = forms.EmailField(required=False, max_length=255)
+    email = forms.EmailField(required=False, max_length=254)
 
     def __init__(self, user, *args, **kwargs):
         # This is the currently signed in user. It may be None.
@@ -46,6 +46,8 @@ class SubscriptionForm(forms.Form):
             raise forms.ValidationError(
                 'Either pay_method_nonce or pay_method_uri can be submitted')
 
+        # Validate the product (the subscription plan) to make sure
+        # it exists.
         plan_id = cleaned_data.get('plan_id')
         product = payments_config.products.get(plan_id)
         if not product:
@@ -55,6 +57,9 @@ class SubscriptionForm(forms.Form):
                                       .format(plan_id)))
 
         if not self.user:
+            # If no user has been signed in, we will assume the subsciption
+            # plan supports email-only subscriptions and raise the appropriate
+            # errors if not.
             email = cleaned_data.get('email')
             if not email:
                 return self.add_error(
