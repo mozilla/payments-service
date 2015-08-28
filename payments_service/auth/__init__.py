@@ -33,6 +33,7 @@ class SolitudeBuyer(AnonymousUser):
         return False
 
     def is_authenticated(self):
+        # TODO: maybe return False here for email-only buyers?
         return True
 
 

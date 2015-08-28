@@ -9,12 +9,14 @@ import mock
 from nose.tools import eq_
 from slumber.exceptions import HttpClientError
 
-from payments_service.base.tests import TestCase
+from payments_service.base.tests import TestCase, WithFakePaymentsConfig
 
-from .test_subscriptions import subscription, seller_product, SubscriptionTest
+from .test_subscriptions import (subscription, seller_product,
+                                 ExistingSubscriptionTest)
 
 
-def subscription_notice(kind='subscription_charged_successfully'):
+def subscription_notice(product_public_id,
+                        kind='subscription_charged_successfully'):
     return {
         "mozilla": {
             "buyer": {
@@ -66,7 +68,7 @@ def subscription_notice(kind='subscription_charged_successfully'):
                 }
             },
             "subscription": subscription(),
-            "product": seller_product(),
+            "product": seller_product(product_public_id),
         },
         "braintree": {
             "kind": kind
@@ -74,7 +76,7 @@ def subscription_notice(kind='subscription_charged_successfully'):
     }
 
 
-class TestWebhook(SubscriptionTest):
+class TestWebhook(WithFakePaymentsConfig, ExistingSubscriptionTest):
 
     def get(self, **params):
         params.setdefault('bt_challenge', 'challenge-code')
@@ -103,7 +105,7 @@ class TestWebhook(SubscriptionTest):
 
     def test_parse(self):
         post = self.solitude.braintree.webhook.post
-        post.return_value = subscription_notice()
+        post.return_value = subscription_notice('service-subscription')
 
         data = {'bt_payload': 'p', 'bt_signature': 's'}
         res = self.post(data=data)
@@ -117,12 +119,12 @@ class TestWebhook(SubscriptionTest):
         eq_(res.status_code, 400)
 
     def test_email_for_subscription_charge(self):
-        notice = subscription_notice()
+        notice = subscription_notice('service-subscription')
         self.solitude.braintree.webhook.post.return_value = notice
         self.post()
         self.assertEqual(len(mail.outbox), 1)
         self.assertEqual(mail.outbox[0].subject,
-                         "You're subscribed to Brick")
+                         "You're subscribed to Fake Subscription")
         self.assertEqual(mail.outbox[0].to,
                          [notice['mozilla']['buyer']['email']])
         self.assertEqual(mail.outbox[0].from_email,
@@ -131,12 +133,14 @@ class TestWebhook(SubscriptionTest):
                          [settings.SUBSCRIPTION_REPLY_TO_EMAIL])
 
         msg = mail.outbox[0].body
-        assert 'Mozilla Concrete' in msg, 'Unexpected: {}'.format(msg)
+        assert 'Fake Service Provider' in msg, 'Unexpected: {}'.format(msg)
         text = 'Receipt #     {}'.format(
             notice['mozilla']['transaction']['generic']['uuid']
         )
         assert text in msg, 'Unexpected: {}'.format(msg)
-        assert 'Product       Brick' in msg, 'Unexpected: {}'.format(msg)
+        assert 'Product       Fake Subscription' in msg, (
+            'Unexpected: {}'.format(msg)
+        )
         assert 'Amount        $10.00' in msg, 'Unexpected: {}'.format(msg)
         assert 'Visa ending in 1234' in msg, 'Unexpected: {}'.format(msg)
         assert 'Period        11 Jun 2015 - 10 Jul 2015' in msg, (
@@ -147,18 +151,21 @@ class TestWebhook(SubscriptionTest):
 
     def test_email_for_subscription_charge_failure(self):
         notice = subscription_notice(
+            'service-subscription',
             kind='subscription_charged_unsuccessfully'
         )
         self.solitude.braintree.webhook.post.return_value = notice
         self.post()
         self.assertEqual(len(mail.outbox), 1)
         self.assertEqual(mail.outbox[0].subject,
-                         'Brick: subscription charge failed')
+                         'Fake Subscription: subscription charge failed')
 
         msg = mail.outbox[0].body
-        assert 'Mozilla Concrete' in msg, 'Unexpected: {}'.format(msg)
+        assert 'Fake Service Provider' in msg, 'Unexpected: {}'.format(msg)
         assert 'Visa ending in 1234' in msg, 'Unexpected: {}'.format(msg)
-        assert 'Product       Brick' in msg, 'Unexpected: {}'.format(msg)
+        assert 'Product       Fake Subscription' in msg, (
+            'Unexpected: {}'.format(msg)
+        )
         assert 'Amount        $10.00' in msg, 'Unexpected: {}'.format(msg)
         assert 'Period        11 Jun 2015 - 10 Jul 2015' in msg, (
             'Unexpected: {}'.format(msg)
@@ -167,6 +174,7 @@ class TestWebhook(SubscriptionTest):
 
     def test_html_for_subscription_charge_failure(self):
         notice = subscription_notice(
+            'service-subscription',
             kind='subscription_charged_unsuccessfully'
         )
         self.solitude.braintree.webhook.post.return_value = notice
@@ -180,21 +188,25 @@ class TestWebhook(SubscriptionTest):
 
     def test_email_for_subscription_canceled(self):
         notice = subscription_notice(
+            'service-subscription',
             kind='subscription_canceled'
         )
         self.solitude.braintree.webhook.post.return_value = notice
         self.post()
         self.assertEqual(len(mail.outbox), 1)
         self.assertEqual(mail.outbox[0].subject,
-                         'Brick: subscription canceled')
+                         'Fake Subscription: subscription canceled')
 
         msg = mail.outbox[0].body
-        assert 'Product       Brick' in msg, 'Unexpected: {}'.format(msg)
+        assert 'Product       Fake Subscription' in msg, (
+            'Unexpected: {}'.format(msg)
+        )
         assert 'Amount        $10.00' in msg, 'Unexpected: {}'.format(msg)
         assert 'TOTAL' not in msg, 'Unexpected: {}'.format(msg)
 
     def test_html_for_subscription_canceled(self):
         notice = subscription_notice(
+            'service-subscription',
             kind='subscription_canceled'
         )
         self.solitude.braintree.webhook.post.return_value = notice
@@ -213,12 +225,12 @@ class TestWebhook(SubscriptionTest):
         self.assertEqual(len(mail.outbox), 0)
 
 
-class TestDebug(TestCase):
+class TestDebug(WithFakePaymentsConfig, TestCase):
 
     def setUp(self):
         self.url = reverse('braintree:debug-email')
         super(TestDebug, self).setUp()
-        notice = subscription_notice()
+        notice = subscription_notice('service-subscription')
         # Mocking things out is the best.
         self.solitude.braintree.mozilla.transaction.get.return_value = (
             [notice['mozilla']['transaction']['braintree']]

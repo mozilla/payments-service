@@ -1,7 +1,10 @@
 from django.conf.urls import patterns, url
 
+from payments_service.base.views import composed_view
+
 from .views.subscriptions import (
-    CancelSubscription, ChangeSubscriptionPayMethod, Subscriptions
+    CancelSubscription, ChangeSubscriptionPayMethod, CreateSubscriptions,
+    RetrieveSubscriptions,
 )
 from .views.token_generator import TokenGenerator
 from .views.paymethod import (BraintreePayMethod, DeleteBraintreePayMethod,
@@ -14,8 +17,13 @@ from .views.webhook import debug_email, Webhook
 urlpatterns = patterns(
     '',
     url(r'^sale/$', Sale.as_view(), name='sale'),
-    url(r'^subscriptions/$', Subscriptions.as_view(),
-        name='subscriptions'),
+    url(r'^subscriptions/$',
+        composed_view({
+            'get': RetrieveSubscriptions.as_view(),
+            'post': CreateSubscriptions.as_view(),
+            # TODO: I think I need 'options' for CORS. This is a note to self
+            # so I can test it before merging.
+        }), name='subscriptions'),
     url(r'^subscriptions/cancel/$', CancelSubscription.as_view(),
         name='subscriptions.cancel'),
     url(r'^subscriptions/paymethod/change/$',

@@ -2,7 +2,7 @@ import logging
 
 from rest_framework.response import Response
 
-from payments_service.solitude import SolitudeAPIView
+from payments_service.solitude import AnonymousSolitudeAPIView, SolitudeAPIView
 from payments_service.base.views import error_400
 from slumber.exceptions import HttpClientError
 
@@ -12,10 +12,11 @@ from ..forms import (ChangeSubscriptionPayMethodForm, ManageSubscriptionForm,
 log = logging.getLogger(__name__)
 
 
-class Subscriptions(SolitudeAPIView):
+class RetrieveSubscriptions(SolitudeAPIView):
     """
-    Deals with Braintree plan subscriptions.
+    Deals with retrieving Braintree plan subscriptions.
     """
+
     def get(self, request):
         subscriptions = self.api.braintree.mozilla.subscription.get(
             active=True,
@@ -27,8 +28,15 @@ class Subscriptions(SolitudeAPIView):
                                                      ['seller_product']),
         }, status=200)
 
+
+class CreateSubscriptions(AnonymousSolitudeAPIView):
+    """
+    Deals with creating Braintree plan subscriptions.
+    """
+
     def post(self, request):
-        form = SubscriptionForm(request.DATA)
+        # TODO: make this not require sign-in.
+        form = SubscriptionForm(request.user, request.DATA)
         if not form.is_valid():
             return error_400(response=form.errors)
 
@@ -39,20 +47,20 @@ class Subscriptions(SolitudeAPIView):
         )
         # Check if the user is already subscribed to this plan.
         result = self.api.braintree.mozilla.subscription.get(
-            paymethod__braintree_buyer__buyer=self.request.user.pk,
+            paymethod__braintree_buyer__buyer=form.user.pk,
             seller_product=product['resource_pk'],
         )
         if len(result):
             log.info(
                 'buyer {buyer} is already subscribed to product {product}'
-                .format(buyer=self.request.user.pk,
+                .format(buyer=form.user.pk,
                         product=product['resource_pk']))
             return error_400(
                 response='user is already subscribed to this product')
 
         try:
             pay_method_uri = self.get_pay_method(
-                request.user,
+                form.user,
                 form.cleaned_data['pay_method_uri'],
                 form.cleaned_data['pay_method_nonce']
             )

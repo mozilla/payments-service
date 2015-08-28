@@ -7,7 +7,8 @@ import mock
 from nose.tools import eq_, raises
 from slumber.exceptions import HttpClientError
 
-from payments_service.base.tests import AuthenticatedTestCase
+from payments_service.base.tests import (AuthenticatedTestCase,
+                                         WithFakePaymentsConfig)
 
 
 def subscription():
@@ -21,19 +22,18 @@ def subscription():
     }
 
 
-def seller_product():
+def seller_product(public_id):
     return {
         "seller": "/generic/seller/19/",
         "resource_uri": "/generic/product/18/",
         "resource_pk": 18,
-        "public_id": "mozilla-concrete-brick",
-        "external_id": "mozilla-concrete-brick"
+        "public_id": public_id,
     }
 
 
-class TestSubscribe(AuthenticatedTestCase):
+class TestSubscribe(WithFakePaymentsConfig, AuthenticatedTestCase):
     nonce = 'some-braintree-nonce'
-    plan_id = 'some-braintree-plan'
+    plan_id = 'service-subscription'
 
     def post(self, data=None, **overrides):
         if data is None:
@@ -73,6 +73,15 @@ class TestSubscribe(AuthenticatedTestCase):
         }
         return pay_method_uri
 
+    def expect_new_email_only_buyer(self):
+        buyer_getter = self.solitude.generic.buyer.get_object_or_404
+        buyer_getter.side_effect = ObjectDoesNotExist
+        self.solitude.generic.buyer.post.return_value = {
+            'uuid': 'new-email-only-uuid',
+            'resource_pk': 54321,
+            'authenticated': False,
+        }
+
     def test_with_new_pay_method(self):
         self.setup_generic_buyer()
         self.setup_no_subscription_yet()
@@ -98,18 +107,6 @@ class TestSubscribe(AuthenticatedTestCase):
         eq_(args['paymethod'], pay_method_uri)
         eq_(args['plan'], self.plan_id)
 
-    def test_too_many_pay_methods(self):
-        self.setup_generic_buyer()
-        self.setup_no_subscription_yet()
-        pay_method_uri = '/my/saved/paymethod'
-
-        res, data = self.post(data={
-            'pay_method_uri': pay_method_uri,
-            'pay_method_nonce': self.nonce,
-            'plan_id': self.plan_id,
-        })
-        self.assert_form_error(res, ['__all__'])
-
     def test_bad_solitude_request(self):
         self.setup_generic_buyer()
         self.setup_no_subscription_yet()
@@ -120,12 +117,8 @@ class TestSubscribe(AuthenticatedTestCase):
         res, data = self.post()
         self.assert_form_error(res, ['nonce'])
 
-    def test_missing_pay_method(self):
-        self.setup_no_subscription_yet()
-        res, data = self.post({'plan_id': self.plan_id})
-        self.assert_form_error(res, ['__all__'])
-
     def test_user_already_subscribed(self):
+        # TODO: move to form validation
         self.setup_generic_buyer()
         self.setup_existing_subscription()
 
@@ -138,17 +131,27 @@ class TestSubscribe(AuthenticatedTestCase):
         self.setup_no_subscription_yet()
         self.expect_new_pay_method()
 
-        res, data = self.post(amount='1.99')
+        res, data = self.post(amount='1.99', plan_id='org-recurring-donation')
         eq_(res.status_code, 204, res)
 
         args = self.solitude.braintree.subscription.post.call_args[0][0]
         eq_(args['amount'], Decimal('1.99'))
 
+    def test_signed_out_user_can_donate(self):
+        self.client.logout()
+        self.expect_new_email_only_buyer()
+        self.setup_no_subscription_yet()
+        self.expect_new_pay_method()
 
-class SubscriptionTest(AuthenticatedTestCase):
+        res, data = self.post(amount='1.99', email='someone@somewhere.org',
+                              plan_id='org-recurring-donation')
+        eq_(res.status_code, 204, res)
+
+
+class ExistingSubscriptionTest(AuthenticatedTestCase):
 
     def setUp(self):
-        super(SubscriptionTest, self).setUp()
+        super(ExistingSubscriptionTest, self).setUp()
         self.new_pay_method_uri = '/new_pay_method_uri'
         self.subscription_uri = '/subscription_uri'
 
@@ -177,12 +180,12 @@ class SubscriptionTest(AuthenticatedTestCase):
         return resources
 
 
-class TestGetSubscriptions(AuthenticatedTestCase):
+class TestGetSubscriptions(WithFakePaymentsConfig, AuthenticatedTestCase):
 
     def setUp(self):
         super(TestGetSubscriptions, self).setUp()
         self.subscription_obj = subscription()
-        self.seller_product = seller_product()
+        self.seller_product = seller_product('service-subscription')
 
         bt = self.solitude.braintree
         bt.mozilla.subscription.get.return_value = [self.subscription_obj]
@@ -196,6 +199,11 @@ class TestGetSubscriptions(AuthenticatedTestCase):
         return self.json(
             self.client.get(reverse('braintree:subscriptions'))
         )
+
+    def test_must_be_signed_in(self):
+        self.client.logout()
+        res, data = self.get()
+        eq_(res.status_code, 403, res)
 
     def test_return_subscriptions(self):
         response, data = self.get()
@@ -233,7 +241,7 @@ class TestGetSubscriptions(AuthenticatedTestCase):
         self.get()
 
 
-class TestChangeSubscriptionPayMethod(SubscriptionTest):
+class TestChangeSubscriptionPayMethod(ExistingSubscriptionTest):
 
     def setUp(self):
         super(TestChangeSubscriptionPayMethod, self).setUp()
@@ -261,7 +269,7 @@ class TestChangeSubscriptionPayMethod(SubscriptionTest):
         eq_(api_post.call_args[0][0]['subscription'], self.subscription_uri)
 
 
-class TestCancelSubscription(SubscriptionTest):
+class TestCancelSubscription(ExistingSubscriptionTest):
 
     def setUp(self):
         super(TestCancelSubscription, self).setUp()

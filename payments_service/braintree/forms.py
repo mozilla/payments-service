@@ -1,6 +1,12 @@
 import logging
+import uuid
 
 from django import forms
+from django.core.exceptions import ObjectDoesNotExist
+import payments_config
+
+from payments_service import solitude
+from payments_service.auth import SolitudeBuyer
 
 from . import utils
 
@@ -21,6 +27,12 @@ class SubscriptionForm(forms.Form):
     # things like recurring donations. Solitude validates this value to make
     # sure you can't adjust fixed price subscriptions.
     amount = forms.DecimalField(required=False)
+    email = forms.EmailField(required=False, max_length=255)
+
+    def __init__(self, user, *args, **kwargs):
+        # This is the currently signed in user. It may be None.
+        self.user = user
+        super(SubscriptionForm, self).__init__(*args, **kwargs)
 
     def clean(self):
         cleaned_data = super(SubscriptionForm, self).clean()
@@ -33,6 +45,74 @@ class SubscriptionForm(forms.Form):
         if method_missing or too_many_methods:
             raise forms.ValidationError(
                 'Either pay_method_nonce or pay_method_uri can be submitted')
+
+        plan_id = cleaned_data.get('plan_id')
+        product = payments_config.products.get(plan_id)
+        if not product:
+            return self.add_error(
+                'plan_id',
+                forms.ValidationError('Unrecoginized plan_id: {}'
+                                      .format(plan_id)))
+
+        if not self.user:
+            email = cleaned_data.get('email')
+            if not email:
+                return self.add_error(
+                    'plan_id',
+                    forms.ValidationError(
+                        'While subscribing anonymously, '
+                        'email cannot be empty'))
+            else:
+                self.validate_email_only_subscription(email, product)
+
+    def validate_email_only_subscription(self, email, product):
+        if product.user_identification != 'email':
+            log.info('email-user {} cannot subscribe to plan '
+                     '{} because user_identification={}'
+                     .format(email, product.id,
+                             product.user_identification))
+            return self.add_error(
+                'plan_id',
+                forms.ValidationError(
+                    'You cannot subscribe to this plan without '
+                    'signing in first.'
+                )
+            )
+        try:
+            self.user = self.reuse_existing_email_buyer(email)
+            log.info('Re-using email-only buyer for email '
+                     '{} and plan {}'.format(email, product.id))
+        except ObjectDoesNotExist:
+            log.info('Creating email-only buyer for email '
+                     '{} and plan {}'.format(email, product.id))
+            self.user = self.create_email_only_buyer(email)
+
+    def create_email_only_buyer(self, email):
+        api = solitude.api()
+        buyer = api.generic.buyer.post({
+            'email': email,
+            'authenticated': False,
+            'uuid': 'service:unauthenticated:{}'.format(uuid.uuid4())
+        })
+        log.info('Created email-only buyer {} for email {}'
+                 .format(buyer['uuid'], email))
+        return self.user_from_api(buyer)
+
+    def reuse_existing_email_buyer(self, email):
+        api = solitude.api()
+        buyer = api.generic.buyer.get_object_or_404(email=email)
+        if buyer['authenticated']:
+            log.info('Buyer account for {email} has already been '
+                     'authenticated'.format(email=email))
+            raise forms.ValidationError(
+                'Cannot subscribe with this email because the '
+                'account requires sign-in.'
+            )
+        return self.user_from_api(buyer)
+
+    def user_from_api(self, buyer_api_result):
+        return SolitudeBuyer(buyer_api_result['uuid'],
+                             buyer_api_result['resource_pk'])
 
 
 class ManageSubscriptionForm(forms.Form):

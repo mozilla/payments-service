@@ -6,8 +6,8 @@ from django.http import HttpResponse
 from django.template import Context
 from django.template.loader import get_template
 
+import payments_config
 from dateutil.parser import parse as parse_date
-from payments_config import products
 from premailer import Premailer
 from rest_framework.renderers import BaseRenderer
 from rest_framework.response import Response
@@ -111,7 +111,9 @@ class Webhook(UnprotectedAPIView):
                  .format(b=result['mozilla']['buyer'],
                          k=notice_kind))
 
-        product = products[result['mozilla']['product']['public_id']]
+        product = payments_config.products[
+            result['mozilla']['product']['public_id']
+        ]
         bt_trans = result['mozilla']['transaction']['braintree']
         moz_trans = result['mozilla']['transaction']['generic']
 
@@ -182,7 +184,9 @@ def debug_email(request):
         )
     moz = api.by_url(bt['transaction']).get()
     method = api.by_url(bt['paymethod']).get()
-    product = products[api.by_url(moz['seller_product']).get()['public_id']]
+    product = payments_config.products[
+        api.by_url(moz['seller_product']).get()['public_id']
+    ]
 
     # Render the HTML.
     data = webhook.build_context(bt, moz, method, product, kind)

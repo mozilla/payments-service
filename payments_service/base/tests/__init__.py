@@ -6,6 +6,7 @@ from django.test import TestCase as DjangoTestCase
 from django.test.utils import override_settings
 
 import mock
+import payments_config
 from nose.tools import eq_
 from rest_framework.views import APIView
 
@@ -113,3 +114,64 @@ class WithDynamicEndpoints(DjangoTestCase):
 
     def _clean_up_dynamic_urls(self):
         dynamic_urls.urlpatterns = None
+
+
+fake_payments_config = {
+    # Example of a service that sells subscription products at fixed prices.
+    'service': {
+        'email': 'support@fake-service-provider.org',
+        'name': 'Fake Service Provider',
+        'url': 'http://fake-service-provider.org/',
+        'terms': 'http://fake-service-provider.org/terms/',
+        'kind': 'products',
+        'products': [
+            {
+                'id': 'subscription',
+                'description': 'Fake Subscription',
+                'amount': '10.00',
+                'recurrence': 'monthly',
+                'user_identification': 'fxa-auth',
+            },
+        ]
+    },
+    # Example of an organization that accepts donations.
+    'org': {
+        'email': 'support@some-org.org',
+        'name': 'Some Organization',
+        'url': 'http://some-org.org/',
+        'terms': 'http://some-org.org/terms/',
+        'kind': 'donations',
+        'products': [
+            {
+                'id': 'donation',
+                'description': 'Donation',
+                'recurrence': None,
+                'user_identification': None,
+            },
+            {
+                'id': 'recurring-donation',
+                'description': 'Recurring Donation',
+                'recurrence': 'monthly',
+                'user_identification': 'email',
+            }
+        ]
+    },
+}
+
+
+class WithFakePaymentsConfig(TestCase):
+    """
+    A mixin for any test that wants to work with a fake payments_config
+    object. This will patch the payments_config.products and
+    payments_config.sellers attributes with predictable, fake values.
+    """
+
+    def setUp(self):
+        super(WithFakePaymentsConfig, self).setUp()
+
+        sellers, products = payments_config.populate(fake_payments_config)
+        for attr, val in (('products', products),
+                          ('sellers', sellers)):
+            p = mock.patch.object(payments_config, attr, val)
+            p.start()
+            self.addCleanup(p.stop)
