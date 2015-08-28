@@ -1,4 +1,5 @@
 import json
+import re
 
 from django.conf import settings
 from django.conf.urls import patterns, url
@@ -6,6 +7,7 @@ from django.test import TestCase as DjangoTestCase
 from django.test.utils import override_settings
 
 import mock
+import payments_config
 from nose.tools import eq_
 from rest_framework.views import APIView
 
@@ -113,3 +115,93 @@ class WithDynamicEndpoints(DjangoTestCase):
 
     def _clean_up_dynamic_urls(self):
         dynamic_urls.urlpatterns = None
+
+
+fake_payments_config = {
+    # Example of a service that sells subscription products at fixed prices.
+    'service': {
+        'email': 'support@fake-service-provider.org',
+        'name': 'Fake Service Provider',
+        'url': 'http://fake-service-provider.org/',
+        'terms': 'http://fake-service-provider.org/terms/',
+        'kind': 'products',
+        'products': [
+            {
+                'id': 'subscription',
+                'description': 'Fake Subscription',
+                'amount': '10.00',
+                'recurrence': 'monthly',
+                'user_identification': 'fxa-auth',
+            },
+        ]
+    },
+    # Example of an organization that accepts donations.
+    'org': {
+        'email': 'support@some-org.org',
+        'name': 'Some Organization',
+        'url': 'http://some-org.org/',
+        'terms': 'http://some-org.org/terms/',
+        'kind': 'donations',
+        'products': [
+            {
+                'id': 'donation',
+                'description': 'Donation',
+                'recurrence': None,
+                'user_identification': None,
+            },
+            {
+                'id': 'recurring-donation',
+                'description': 'Recurring Donation',
+                'recurrence': 'monthly',
+                'user_identification': 'email',
+            }
+        ]
+    },
+}
+
+
+class FormTest(TestCase):
+    """
+    A mixin for tests directly against form objects.
+    """
+
+    def assert_form_error(self, errors, error_key, msg=None):
+        """
+        Make assertions about a form error
+
+        **errors**
+            The ``form.errors`` property
+        **error_key**
+            The field name or ``__all__`` error key
+        **msg=None**
+            An optional regular expression pattern that will be
+            used to check the error message.
+        """
+        assert error_key in errors, (
+            'error_key {} not in {}'.format(error_key, errors.as_text())
+        )
+        if msg:
+            actual_msg = ', '.join(e.message for e in
+                                   errors.as_data()[error_key])
+            assert re.match(msg, actual_msg), (
+                'error message "{}" did not match pattern "{}"'
+                .format(actual_msg, msg)
+            )
+
+
+class WithFakePaymentsConfig(TestCase):
+    """
+    A mixin for any test that wants to work with a fake payments_config
+    object. This will patch the payments_config.products and
+    payments_config.sellers attributes with predictable, fake values.
+    """
+
+    def setUp(self):
+        super(WithFakePaymentsConfig, self).setUp()
+
+        sellers, products = payments_config.populate(fake_payments_config)
+        for attr, val in (('products', products),
+                          ('sellers', sellers)):
+            p = mock.patch.object(payments_config, attr, val)
+            p.start()
+            self.addCleanup(p.stop)

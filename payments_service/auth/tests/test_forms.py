@@ -1,11 +1,13 @@
 from nose.tools import eq_
 from requests.exceptions import HTTPError
 
+from payments_service.base.tests import FormTest
+
 from ..forms import SignInForm
 from .test_views import BaseSignInTest
 
 
-class TestSignInForm(BaseSignInTest):
+class TestSignInForm(BaseSignInTest, FormTest):
 
     def submit(self, data=None):
         if data is None:
@@ -14,25 +16,30 @@ class TestSignInForm(BaseSignInTest):
 
     def test_missing_token_or_code(self):
         form = self.submit(data={})
-        assert '__all__' in form.errors, form.errors.as_text()
+        self.assert_form_error(
+            form.errors, '__all__',
+            msg='access_token or authorization_code is required')
 
     def test_bad_fxa_response(self):
         self.set_fxa_post_side_effect(HTTPError('Bad Request'))
 
         form = self.submit()
-        assert 'access_token' in form.errors, form.errors.as_text()
+        self.assert_form_error(form.errors, 'access_token',
+                               msg='invalid FxA response')
         assert self.fxa_post.called
 
     def test_missing_scope(self):
         self.set_fxa_verify_response(scope=[])
         form = self.submit()
-        assert 'access_token' in form.errors, form.errors.as_text()
+        self.assert_form_error(form.errors, 'access_token',
+                               msg='.*missing the payments scope')
         assert self.fxa_post.called
 
     def test_missing_email_scope(self):
         self.set_fxa_verify_response(scope=['payments'])
         form = self.submit()
-        assert 'access_token' in form.errors, form.errors.as_text()
+        self.assert_form_error(form.errors, 'access_token',
+                               msg='.*missing the profile:email scope')
         assert self.fxa_post.called
 
     def test_honor_full_profile_access(self):
@@ -50,7 +57,7 @@ class TestSignInForm(BaseSignInTest):
         assert self.fxa_post.called
 
 
-class TestSignInFormWithCode(BaseSignInTest):
+class TestSignInFormWithCode(BaseSignInTest, FormTest):
 
     def setUp(self):
         super(TestSignInFormWithCode, self).setUp()
@@ -76,7 +83,8 @@ class TestSignInFormWithCode(BaseSignInTest):
 
     def test_missing_client_id(self):
         form = self.submit(data={'authorization_code': self.code})
-        assert '__all__' in form.errors, form.errors.as_text()
+        self.assert_form_error(form.errors, '__all__',
+                               msg='client_id is required')
 
     def test_wrong_client_id(self):
         form = self.submit(data={'authorization_code': self.code,
@@ -87,7 +95,8 @@ class TestSignInFormWithCode(BaseSignInTest):
         self.set_fxa_post_side_effect(HTTPError('Bad Request'))
 
         form = self.submit()
-        assert '__all__' in form.errors, form.errors.as_text()
+        self.assert_form_error(form.errors, '__all__',
+                               msg='invalid FxA response')
         assert self.fxa_post.called
 
     def test_token_is_verified(self):
@@ -97,5 +106,6 @@ class TestSignInFormWithCode(BaseSignInTest):
         self.set_fxa_verify_response(scope=['payments'])
         form = self.submit()
 
-        assert '__all__' in form.errors, form.errors.as_text()
+        self.assert_form_error(form.errors, '__all__')
+        # Make sure token was validated:
         assert self.fxa_post.called

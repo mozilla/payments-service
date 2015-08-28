@@ -391,6 +391,22 @@ These endpoints allow you to work with Braintree plan subscriptions.
     To pay using a new credit card, submit ``pay_method_nonce``. To pay
     with a saved credit card, submit ``pay_method_uri``.
 
+    There are currently two types of subscriptions supported, which
+    vary the way this API endpoint can be used:
+
+    **service subscriptions**
+
+    - The user must be signed in.
+    - ``amount`` cannot be used because these types of subscriptions have a
+      fixed price.
+    - ``email`` cannot be used because the user is already signed in.
+
+    **recurring donations**
+
+    - The user doesn't have to be signed in.
+    - To subscribe a user without sign-in, pass in their ``email``.
+    - The recurring donation ``amount`` is customizable.
+
     **Request**
 
     :param string pay_method_nonce:
@@ -408,6 +424,12 @@ These endpoints allow you to work with Braintree plan subscriptions.
         Custom payment amount as a decimal string.
         This only applies to subscription plans that allow
         custom amounts such as recurring donations.
+    :param string email:
+        Email of the person who is subscribing to the plan.
+        This only applies to requests where the user has not already been
+        signed in. Not all plans can be subscribed anonymously like this.
+        For example, recurring donations can be created this way but
+        service subscriptions cannot.
 
     **Response**
 
