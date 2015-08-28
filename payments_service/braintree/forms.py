@@ -5,7 +5,7 @@ from django import forms
 import payments_config
 
 from payments_service import solitude
-from payments_service.auth import SolitudeBuyer
+from payments_service.auth import SolitudeBuyer, utils as auth_utils
 
 from . import utils
 
@@ -98,6 +98,7 @@ class SubscriptionForm(forms.Form):
         })
         log.info('Created email-only buyer {} for email {}'
                  .format(buyer['uuid'], email))
+        auth_utils.set_up_braintree_customer(buyer)
         return self.user_from_api(buyer)
 
     def user_from_api(self, buyer_api_result):

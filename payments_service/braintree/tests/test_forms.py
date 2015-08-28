@@ -46,6 +46,11 @@ class TestSubscriptionForm(WithFakePaymentsConfig, PaymentFormTest):
         super(TestSubscriptionForm, self).setUp()
         self.pay_method_nonce = 'some-bt-pay-method-nonce'
         self.plan_id = 'service-subscription'
+        p = mock.patch(
+            'payments_service.auth.utils.set_up_braintree_customer'
+        )
+        self.set_up_braintree_customer = p.start()
+        self.addCleanup(p.stop)
 
     def form_data(self):
         return SubscriptionForm, {
@@ -88,10 +93,11 @@ class TestSubscriptionForm(WithFakePaymentsConfig, PaymentFormTest):
     def test_email_only_recurring_donation_creates_user(self):
         self.expect_non_existant_buyer()
         email = 'someone@somewhere.org'
-        self.solitude.generic.buyer.post.return_value = {
+        buyer = {
             'uuid': 'created-uuid',
             'resource_pk': 1234,
         }
+        self.solitude.generic.buyer.post.return_value = buyer
 
         form = self.submit(
             user=False,
@@ -106,6 +112,7 @@ class TestSubscriptionForm(WithFakePaymentsConfig, PaymentFormTest):
             args['uuid']
         )
         eq_(form.user.uuid, 'created-uuid')
+        self.set_up_braintree_customer.assert_called_with(buyer)
 
     def test_recurring_donation_requires_email(self):
         form = self.submit(

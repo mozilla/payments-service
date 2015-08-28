@@ -62,6 +62,11 @@ class TestSignInView(SignInTest):
     def setUp(self):
         super(TestSignInView, self).setUp()
         self.set_no_payment_methods_yet()
+        p = mock.patch(
+            'payments_service.auth.utils.set_up_braintree_customer'
+        )
+        self.set_up_braintree_customer = p.start()
+        self.addCleanup(p.stop)
 
     def test_return_buyer_ids(self):
         buyer = self.set_solitude_buyer_getter()
@@ -81,6 +86,7 @@ class TestSignInView(SignInTest):
         })
         eq_(res.status_code, 200, res)
         eq_(data['buyer_uuid'], buyer['uuid'])
+        self.set_up_braintree_customer.assert_called_with(buyer)
 
     def test_return_buyer_email(self):
         self.set_solitude_buyer_getter()
@@ -121,10 +127,11 @@ class TestSignInView(SignInTest):
 
     def test_create_solitude_buyer(self):
         self.solitude.generic.buyer.get_object.side_effect = ObjectDoesNotExist
-        self.solitude.generic.buyer.post.return_value = {
+        buyer = {
             'uuid': 'buyer-uuid',
             'resource_pk': 1
         }
+        self.solitude.generic.buyer.post.return_value = buyer
 
         res, data = self.post()
         eq_(res.status_code, 201, res)
@@ -133,6 +140,7 @@ class TestSignInView(SignInTest):
             'locale': 'en-US',
             'uuid': 'fxa:{u}'.format(u=self.fxa_user_id),
         })
+        self.set_up_braintree_customer.assert_called_with(buyer)
 
     def test_save_buyer_data_to_session(self):
         self.set_solitude_buyer_getter()
@@ -154,29 +162,6 @@ class TestSignInView(SignInTest):
         self.set_solitude_buyer_getter()
         res, data = self.post()
         assert 'csrf_token' in data, 'Unexpected: {}'.format(data)
-
-    def test_with_existing_braintree_customer(self):
-        buyer = self.set_solitude_buyer_getter()
-        res, data = self.post()
-
-        bt_getter = self.solitude.braintree.mozilla.buyer.get_object_or_404
-        bt_getter.assert_called_with(buyer=buyer['resource_pk'])
-        assert not self.solitude.braintree.customer.post.called
-        eq_(res.status_code, 200, res)
-
-    def test_without_braintree_customer(self):
-        buyer = self.set_solitude_buyer_getter()
-
-        # Set up non-existing braintree customer.
-        bt_getter = self.solitude.braintree.mozilla.buyer.get_object_or_404
-        bt_getter.side_effect = ObjectDoesNotExist
-
-        res, data = self.post()
-
-        self.solitude.braintree.customer.post.assert_called_with(
-            {'uuid': buyer['uuid']}
-        )
-        eq_(res.status_code, 200, res)
 
 
 class TestSignOut(AuthenticatedTestCase):
