@@ -6,6 +6,7 @@ from django.middleware import csrf
 from rest_framework.response import Response
 from slumber.exceptions import HttpClientError
 
+from . import utils
 from .. import solitude
 from ..base.views import APIView, error_400, UnprotectedAPIView
 from .forms import SignInForm
@@ -44,9 +45,7 @@ class SignInView(UnprotectedAPIView):
                     .format(buyer=buyer['uuid'], fxa_uuid=fxa_uuid))
                 created = True
 
-            # Make sure this user has a braintree customer which is needed for
-            # pretty much everything.
-            self.set_up_braintree_customer(buyer)
+            utils.set_up_braintree_customer(buyer)
 
         except HttpClientError, exc:
             log.warn(
@@ -89,18 +88,6 @@ class SignInView(UnprotectedAPIView):
             'payment_methods': pay_methods,
             'csrf_token': csrf.get_token(request),
         }, status=201 if created else 200)
-
-    def set_up_braintree_customer(self, buyer):
-        api = solitude.api()
-        try:
-            api.braintree.mozilla.buyer.get_object_or_404(
-                buyer=buyer['resource_pk'])
-            log.info('using existing braintree customer tied to buyer {b}'
-                     .format(b=buyer))
-        except ObjectDoesNotExist:
-            log.info('creating new braintree customer for {buyer}'
-                     .format(buyer=buyer['resource_pk']))
-            api.braintree.customer.post({'uuid': buyer['uuid']})
 
 
 class SignOutView(APIView):

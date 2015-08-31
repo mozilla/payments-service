@@ -46,6 +46,11 @@ class TestSubscriptionForm(WithFakePaymentsConfig, PaymentFormTest):
         super(TestSubscriptionForm, self).setUp()
         self.pay_method_nonce = 'some-bt-pay-method-nonce'
         self.plan_id = 'service-subscription'
+        p = mock.patch(
+            'payments_service.auth.utils.set_up_braintree_customer'
+        )
+        self.set_up_braintree_customer = p.start()
+        self.addCleanup(p.stop)
 
     def form_data(self):
         return SubscriptionForm, {
@@ -88,10 +93,11 @@ class TestSubscriptionForm(WithFakePaymentsConfig, PaymentFormTest):
     def test_email_only_recurring_donation_creates_user(self):
         self.expect_non_existant_buyer()
         email = 'someone@somewhere.org'
-        self.solitude.generic.buyer.post.return_value = {
+        buyer = {
             'uuid': 'created-uuid',
             'resource_pk': 1234,
         }
+        self.solitude.generic.buyer.post.return_value = buyer
 
         form = self.submit(
             user=False,
@@ -106,28 +112,7 @@ class TestSubscriptionForm(WithFakePaymentsConfig, PaymentFormTest):
             args['uuid']
         )
         eq_(form.user.uuid, 'created-uuid')
-
-    def test_reuse_email_buyer_if_not_authenticated(self):
-        self.expect_existing_buyer(uuid='existing-uuid',
-                                   authenticated=False)
-        email = 'someone@somewhere.org'
-        form = self.submit(
-            user=False,
-            overrides=dict(plan_id='org-recurring-donation',
-                           email=email))
-        eq_(form.user.uuid, 'existing-uuid')
-        assert not self.solitude.generic.buyer.post.called
-
-    def test_cannot_reuse_email_buyer_if_they_were_authenticated(self):
-        self.expect_existing_buyer(authenticated=True)
-        form = self.submit(
-            expect_errors=True,
-            user=False,
-            overrides=dict(plan_id='org-recurring-donation',
-                           email='someone@somewhere.org'))
-        self.assert_form_error(
-            form.errors, '__all__',
-            msg='Cannot subscribe with this email')
+        self.set_up_braintree_customer.assert_called_with(buyer)
 
     def test_recurring_donation_requires_email(self):
         form = self.submit(
