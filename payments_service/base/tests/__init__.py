@@ -43,15 +43,27 @@ class TestCase(DjangoTestCase):
         self.solitude = APIMock()
         api.return_value = self.solitude
 
-    def assert_form_error(self, res, fields=[]):
+    def assert_error_response(self, res, msg_patterns=None):
+        """
+        Make assertions about errors in the endpoint's JSON response.
+        """
         eq_(res.status_code, 400, res)
         res, data = self.json(res)
-        assert 'error_response' in data, data
-        for field in fields:
-            assert field in data['error_response'], (
-                'field {f} not in {d}'
-                .format(f=field, d=data['error_response'])
-            )
+        assert 'error_response' in data, (
+            'Expected error_response in: {}'.format(data)
+        )
+        if msg_patterns:
+            for key, pattern in msg_patterns.items():
+                assert key in data['error_response'], (
+                    'error key {} not in {}'
+                    .format(key, data['error_response'])
+                )
+
+                actual_msg = ', '.join(data['error_response'][key])
+                assert re.match(pattern, actual_msg), (
+                    'error message "{}" did not match pattern "{}"'
+                    .format(actual_msg, pattern)
+                )
 
     def json(self, response):
         if response.status_code == 204:
@@ -177,6 +189,9 @@ class FormTest(TestCase):
             An optional regular expression pattern that will be
             used to check the error message.
         """
+        if not len(errors.keys()):
+            raise AssertionError('no form errors; expected error for: {}'
+                                 .format(error_key))
         assert error_key in errors, (
             'error_key {} not in {}'.format(error_key, errors.as_text())
         )

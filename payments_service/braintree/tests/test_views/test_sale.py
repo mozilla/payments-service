@@ -55,4 +55,5 @@ class TestSale(AuthenticatedTestCase):
         self.solitude.braintree.sale.post.side_effect = exc
 
         res, data = self.post()
-        self.assert_form_error(res, ['product_id'])
+        self.assert_error_response(
+            res, msg_patterns={'product_id': exc.content['product_id'][0]})

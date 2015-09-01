@@ -69,6 +69,17 @@ class SubscriptionForm(forms.Form):
             else:
                 self.validate_email_only_subscription(email, product)
 
+        # Now that we have a user object, validate that the user
+        # owns the requested payment method.
+        if pay_method_uri and not utils.user_owns_resource(
+                pay_method_uri,
+                {'braintree_buyer__buyer__uuid': self.user.uuid}):
+            return self.add_error(
+                'pay_method_uri',
+                forms.ValidationError(
+                    'paymethod by URI does not exist or belongs to '
+                    'another user'))
+
     def validate_email_only_subscription(self, email, product):
         if product.user_identification != 'email':
             log.info('email-user {} cannot subscribe to plan '
