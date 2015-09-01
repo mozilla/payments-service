@@ -115,15 +115,16 @@ class TestSubscribe(WithFakePaymentsConfig, AuthenticatedTestCase):
         self.solitude.braintree.paymethod.post.side_effect = exc
 
         res, data = self.post()
-        self.assert_form_error(res, ['nonce'])
+        self.assert_error_response(
+            res, msg_patterns={'nonce': exc.content['nonce'][0]})
 
     def test_user_already_subscribed(self):
-        # TODO: move to form validation
         self.setup_generic_buyer()
         self.setup_existing_subscription()
 
         res, data = self.post()
-        self.assert_form_error(res, ['__all__'])
+        self.assert_error_response(
+            res, msg_patterns={'__all__': 'user is already subscribed'})
         assert self.solitude.braintree.mozilla.subscription.get.called
 
     def test_pay_a_custom_amount(self):

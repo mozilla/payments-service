@@ -156,7 +156,7 @@ class TestSignInView(SignInTest):
         self.solitude.generic.buyer.get_object.side_effect = err
 
         res, data = self.post()
-        self.assert_form_error(res)
+        self.assert_error_response(res)
 
     def test_expose_csrf_token(self):
         self.set_solitude_buyer_getter()

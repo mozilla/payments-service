@@ -73,8 +73,8 @@ class TestSubscriptionForm(WithFakePaymentsConfig, PaymentFormTest):
     def test_too_many_pay_methods(self):
         form = self.submit(
             expect_errors=True,
-            overrides=dict(pay_method_uri='/my/saved/paymethod',
-                           pay_method_nonce='some-nonce'),
+            overrides={'pay_method_uri': '/my/saved/paymethod',
+                       'pay_method_nonce': 'some-nonce'},
         )
         self.assert_form_error(
             form.errors, '__all__',
@@ -83,12 +83,24 @@ class TestSubscriptionForm(WithFakePaymentsConfig, PaymentFormTest):
     def test_missing_pay_method(self):
         form = self.submit(
             expect_errors=True,
-            overrides=dict(pay_method_uri=None,
-                           pay_method_nonce=None),
+            overrides={'pay_method_uri': None,
+                       'pay_method_nonce': None},
         )
         self.assert_form_error(
             form.errors, '__all__',
             msg='Either pay_method_nonce or pay_method_uri can be submitted')
+
+    def test_cannot_pay_with_another_users_pay_method(self):
+        self.user_owns_resource.return_value = False
+
+        form = self.submit(
+            expect_errors=True,
+            overrides={'pay_method_uri': '/someone/elses/paymethod/123',
+                       'pay_method_nonce': None}
+        )
+        self.assert_form_error(
+            form.errors, 'pay_method_uri',
+            msg='paymethod by URI.*belongs to another user')
 
     def test_email_only_recurring_donation_creates_user(self):
         self.expect_non_existant_buyer()
@@ -101,8 +113,8 @@ class TestSubscriptionForm(WithFakePaymentsConfig, PaymentFormTest):
 
         form = self.submit(
             user=False,
-            overrides=dict(plan_id='org-recurring-donation',
-                           email=email))
+            overrides={'plan_id': 'org-recurring-donation',
+                       'email': email})
 
         assert self.solitude.generic.buyer.post.called
         args = self.solitude.generic.buyer.post.call_args[0][0]
@@ -118,7 +130,7 @@ class TestSubscriptionForm(WithFakePaymentsConfig, PaymentFormTest):
         form = self.submit(
             expect_errors=True,
             user=False,
-            overrides=dict(plan_id='org-recurring-donation'))
+            overrides={'plan_id': 'org-recurring-donation'})
         self.assert_form_error(
             form.errors, 'plan_id',
             msg='.*email cannot be empty')
@@ -126,7 +138,7 @@ class TestSubscriptionForm(WithFakePaymentsConfig, PaymentFormTest):
     def test_cannot_subscribe_to_an_unknown_plan(self):
         form = self.submit(
             expect_errors=True,
-            overrides=dict(plan_id='non-existant-plan'))
+            overrides={'plan_id': 'non-existant-plan'})
         self.assert_form_error(
             form.errors, 'plan_id',
             msg='Unrecoginized plan_id')
@@ -135,8 +147,8 @@ class TestSubscriptionForm(WithFakePaymentsConfig, PaymentFormTest):
         form = self.submit(
             expect_errors=True,
             user=False,
-            overrides=dict(plan_id='service-subscription',
-                           email='someone@somewhere.org'))
+            overrides={'plan_id': 'service-subscription',
+                       'email': 'someone@somewhere.org'})
         self.assert_form_error(
             form.errors, 'plan_id',
             msg='You cannot subscribe to this plan')
