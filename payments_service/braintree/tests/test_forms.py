@@ -126,6 +126,17 @@ class TestSubscriptionForm(WithFakePaymentsConfig, PaymentFormTest):
         eq_(form.user.uuid, 'created-uuid')
         self.set_up_braintree_customer.assert_called_with(buyer)
 
+    def test_cannot_subscribe_with_email_when_signed_in(self):
+        # Submit the form with a signed-in user (the default).
+        form = self.submit(
+            expect_errors=True,
+            overrides={'plan_id': 'org-recurring-donation',
+                       'email': 'someone@somewhere.org'})
+        self.assert_form_error(
+            form.errors, 'email',
+            msg='Cannot subscribe with an email address while the '
+                'user is signed in')
+
     def test_recurring_donation_requires_email(self):
         form = self.submit(
             expect_errors=True,

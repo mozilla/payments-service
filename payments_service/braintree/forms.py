@@ -55,11 +55,18 @@ class SubscriptionForm(forms.Form):
                 forms.ValidationError('Unrecoginized plan_id: {}'
                                       .format(plan_id)))
 
-        if not self.user:
+        email = cleaned_data.get('email')
+        if self.user:
+            if email:
+                return self.add_error(
+                    'email',
+                    forms.ValidationError(
+                        'Cannot subscribe with an email address while the '
+                        'user is signed in'))
+        else:
             # If no user has been signed in, we will assume the subsciption
             # plan supports email-only subscriptions and raise the appropriate
             # errors if not.
-            email = cleaned_data.get('email')
             if not email:
                 return self.add_error(
                     'plan_id',
